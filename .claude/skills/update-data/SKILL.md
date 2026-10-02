@@ -50,7 +50,7 @@ You are refreshing the data behind a public calculator people use for a major fi
 ## Step 4: Price and rent histories (FHFA and BLS via FRED)
 
 - Files: `data/series/` (one per metro and series, listed in `data/series_ids.json`). Price index rows are `year q1 q2 q3 q4`; rent rows are `year annual_average`.
-- Fetch from the FRED API with the key in the `FRED_API_KEY` environment variable: `https://api.stlouisfed.org/fred/series/observations?series_id=ID&api_key=KEY&file_type=json`. Without a key, `https://fred.stlouisfed.org/graph/fredgraph.csv?id=ID` also works.
+- Fetch each series as a CSV with no API key: `https://fred.stlouisfed.org/graph/fredgraph.csv?id=ID` (columns: date, value). This routine has no FRED key; the key in the GitHub repository secret is only for the weekly mortgage rate workflow.
 - Add only complete years: all four quarters for a price index, and BLS's published annual average for rent (compute it as the mean of the year's values only if BLS publishes no annual figure, and say so).
 - Overlap check, required for every series before changing its file: compare the fetched values with every year already in the file.
   - BLS rent (not seasonally adjusted, not revised): every overlapping year must match to within 0.1%.

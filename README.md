@@ -55,7 +55,7 @@ A Claude Code routine can check every source each month and open a pull request 
 1. At https://claude.ai/code/routines, click **New routine**.
 2. Name: `Rent or Buy data refresh`. Repository: this repo.
 3. Prompt: `Follow .claude/skills/update-data/SKILL.md to check every data source for newer releases and apply verified updates. Finish with the report described in that skill.`
-4. Environment: create one with **Network access** set to **Custom**, keep the default package list, and allow: `api.stlouisfed.org`, `fred.stlouisfed.org`, `www.huduser.gov`, `www.nar.realtor`, `www.hsh.com`, `www.hicentral.com`, `taxfoundation.org`, `www.irs.gov`, `www.phila.gov`, `www.freddiemac.com`. Add your FRED key as an API credential or environment variable named `FRED_API_KEY`.
+4. Environment: create one with **Network access** set to **Custom**, keep the default package list, and allow: `fred.stlouisfed.org`, `www.huduser.gov`, `www.nar.realtor`, `www.hsh.com`, `www.hicentral.com`, `taxfoundation.org`, `www.irs.gov`, `www.phila.gov`, `www.freddiemac.com`. The routine needs no API key: it downloads FRED data as keyless CSV files. Your FRED key stays in the GitHub repository secret, where the weekly mortgage rate workflow uses it.
 5. Connectors: remove all of them; the routine doesn't need any.
 6. Trigger: monthly. Pick the closest preset in the form, then run `/schedule update` in the Claude Code CLI and set the cron expression `0 9 15 * *` (9am on the 15th).
 7. Click **Run now** once to test it. A green status only means the session ran; open the run to read the report.
