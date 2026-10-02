@@ -95,7 +95,6 @@ python tests/make_cases.py && node tests/check_engine.js && python tests/check_d
 
 ## Known limitations
 
-- HUD's FY2027 Fair Market Rents took effect October 1, 2026. The presets still use FY2026 and are due for an update.
 - Transfer taxes are not modeled. Several metros (Philadelphia, New York, San Francisco, Washington) and Hawaii charge them; raise the selling cost input to account for them.
 - HUD rents are 40th-percentile gross rents (including utilities) for mostly apartment and townhome units, so a single-family house usually rents for more.
 - Metros without a fully sourced price, rent, and 30-year history are excluded: Anchorage, Baltimore, Phoenix, Riverside, and Seattle.

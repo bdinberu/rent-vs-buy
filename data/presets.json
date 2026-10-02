@@ -2,7 +2,7 @@
  "atl": {
   "label": "Atlanta, GA",
   "price": 387000,
-  "rent0": 2182,
+  "rent0": 2099,
   "propTax": 0.00767,
   "assessCap": null,
   "overval": 0.2898,
@@ -14,7 +14,7 @@
  "bos": {
   "label": "Boston, MA",
   "price": 844600,
-  "rent0": 3526,
+  "rent0": 3584,
   "propTax": 0.00948,
   "assessCap": null,
   "overval": 0.3108,
@@ -26,7 +26,7 @@
  "chi": {
   "label": "Chicago, IL",
   "price": 438600,
-  "rent0": 2294,
+  "rent0": 2586,
   "propTax": 0.01793,
   "assessCap": null,
   "overval": 0.0292,
@@ -38,7 +38,7 @@
  "dal": {
   "label": "Dallas, TX",
   "price": 380100,
-  "rent0": 2431,
+  "rent0": 2275,
   "propTax": 0.01245,
   "assessCap": 0.1,
   "overval": 0.3461,
@@ -50,7 +50,7 @@
  "den": {
   "label": "Denver, CO",
   "price": 668300,
-  "rent0": 2734,
+  "rent0": 2846,
   "propTax": 0.00519,
   "assessCap": null,
   "overval": 0.4022,
@@ -62,7 +62,7 @@
  "det": {
   "label": "Detroit, MI",
   "price": 311800,
-  "rent0": 1724,
+  "rent0": 1777,
   "propTax": 0.01129,
   "assessCap": 0.028,
   "overval": 0.1363,
@@ -74,7 +74,7 @@
  "hon": {
   "label": "Honolulu, HI",
   "price": 1190000,
-  "rent0": 3674,
+  "rent0": 3520,
   "propTax": 0.0032,
   "assessCap": null,
   "overval": 0.2674,
@@ -86,7 +86,7 @@
  "hou": {
   "label": "Houston, TX",
   "price": 345200,
-  "rent0": 2116,
+  "rent0": 2017,
   "propTax": 0.01245,
   "assessCap": 0.1,
   "overval": 0.3415,
@@ -98,7 +98,7 @@
  "la": {
   "label": "Los Angeles, CA",
   "price": 879900,
-  "rent0": 3298,
+  "rent0": 3760,
   "propTax": 0.0115,
   "assessCap": 0.02,
   "overval": 0.3512,
@@ -110,7 +110,7 @@
  "mia": {
   "label": "Miami, FL",
   "price": 659000,
-  "rent0": 3127,
+  "rent0": 3277,
   "propTax": 0.0076,
   "assessCap": 0.028,
   "overval": 0.5507,
@@ -122,7 +122,7 @@
  "min": {
   "label": "Minneapolis, MN",
   "price": 414300,
-  "rent0": 2262,
+  "rent0": 2264,
   "propTax": 0.00987,
   "assessCap": null,
   "overval": 0.1864,
@@ -134,7 +134,7 @@
  "ny": {
   "label": "New York, NY",
   "price": 802400,
-  "rent0": 3644,
+  "rent0": 3760,
   "propTax": 0.01227,
   "assessCap": null,
   "overval": 0.2595,
@@ -146,7 +146,7 @@
  "phi": {
   "label": "Philadelphia, PA",
   "price": 419800,
-  "rent0": 2170,
+  "rent0": 2216,
   "propTax": 0.01137,
   "assessCap": null,
   "overval": 0.3458,
@@ -158,7 +158,7 @@
  "sd": {
   "label": "San Diego, CA",
   "price": 1075000,
-  "rent0": 3998,
+  "rent0": 3743,
   "propTax": 0.0115,
   "assessCap": 0.02,
   "overval": 0.2936,
@@ -170,7 +170,7 @@
  "sf": {
   "label": "San Francisco, CA",
   "price": 1500000,
-  "rent0": 4604,
+  "rent0": 4832,
   "propTax": 0.0115,
   "assessCap": 0.02,
   "overval": 0.2261,
@@ -182,7 +182,7 @@
  "stl": {
   "label": "St. Louis, MO",
   "price": 314100,
-  "rent0": 1568,
+  "rent0": 1731,
   "propTax": 0.00849,
   "assessCap": null,
   "overval": 0.1983,
@@ -194,7 +194,7 @@
  "tpa": {
   "label": "Tampa, FL",
   "price": 415000,
-  "rent0": 2527,
+  "rent0": 2448,
   "propTax": 0.0076,
   "assessCap": 0.028,
   "overval": 0.4243,
@@ -206,7 +206,7 @@
  "dc": {
   "label": "Washington, DC (Arlington, Fairfax)",
   "price": 688200,
-  "rent0": 2835,
+  "rent0": 3107,
   "propTax": 0.0112,
   "assessCap": null,
   "overval": 0.2191,
