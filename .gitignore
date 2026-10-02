@@ -1,4 +1,5 @@
 site/index.html
 tests/cases.json
+data/metro_stats.json
 __pycache__/
 *.pyc
