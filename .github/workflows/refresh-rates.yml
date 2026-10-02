@@ -1,0 +1,41 @@
+name: Refresh mortgage rates
+
+on:
+  schedule:
+    - cron: "0 14 * * 5"   # Fridays 14:00 UTC; Freddie Mac publishes Thursdays at noon ET
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Fetch the latest Freddie Mac rates from FRED
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python build/refresh_rates.py
+      - name: Build and run all checks
+        run: |
+          python build/build_site.py
+          python tests/make_cases.py
+          node tests/check_engine.js
+          python tests/check_data.py
+          python tests/test_tax.py
+      - name: Open a pull request with the new rates
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Update mortgage rates from Freddie Mac (via FRED)"
+          title: "Weekly mortgage rate update"
+          body: "Automated update of data/rates.json from FRED (MORTGAGE30US, MORTGAGE15US). All checks passed. Merging deploys the site."
+          branch: auto/rates
+          add-paths: data/rates.json

@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rent or buy: a 30-year cost model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECEEE9; --surface:#FFFFFF; --ink:#1B2230; --muted:#5B6370; --rule:#D3D8CF;
+  --own:#24594A; --own-soft:#DCEBE4; --rent:#845A09; --rent-line:#B9860F; --rent-soft:#F5E9CF;
+  --focus:#2B5FD9; --accent:var(--own); --radius:10px; --radius-sm:6px;
+  --fs-xs:12px; --fs-s:13.5px; --fs-m:15px; --fs-l:20px; --fs-xl:clamp(28px,3.4vw,38px);
+  --sans:"Source Sans 3",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161C; --surface:#1A2028; --ink:#E6E8EC; --muted:#9AA3AE; --rule:#2C343F;
+    --own:#74C2A4; --own-soft:#1E3A31; --rent:#E2B355; --rent-line:#E2B355; --rent-soft:#3B3020; --focus:#7FA6FF;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161C; --surface:#1A2028; --ink:#E6E8EC; --muted:#9AA3AE; --rule:#2C343F;
+  --own:#74C2A4; --own-soft:#1E3A31; --rent:#E2B355; --rent-line:#E2B355; --rent-soft:#3B3020; --focus:#7FA6FF;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:var(--fs-m);line-height:1.5;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+a{color:var(--own)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 20px 64px}
+header.top{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:4px 0 18px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+header.top h1{font-family:var(--serif);font-weight:700;font-size:var(--fs-l);margin:0}
+header.top p{margin:0;color:var(--muted);font-size:var(--fs-s)}
+.layout{display:grid;grid-template-columns:356px minmax(0,1fr);gap:32px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.inputs{order:2}.results{order:1}}
+
+/* Inputs */
+.inputs{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding-right:6px}
+@media (max-width:900px){.inputs{position:static;max-height:none;overflow:visible}}
+fieldset{border:0;margin:0 0 22px;padding:0}
+legend{font-family:var(--serif);font-weight:600;font-size:var(--fs-m);padding:0;margin-bottom:8px}
+.field{display:grid;grid-template-columns:1fr 128px;align-items:center;gap:4px 12px;padding:7px 0;border-top:1px solid var(--rule)}
+.field label{font-size:var(--fs-m)}
+.field .hint{grid-column:1 / -1;color:var(--muted);font-size:var(--fs-xs);line-height:1.35;margin-top:-2px}
+.num{display:flex;align-items:center;border:1px solid var(--rule);background:var(--surface);border-radius:var(--radius-sm);padding:0 8px;height:34px}
+.num:focus-within{border-color:var(--focus)}
+.num input{width:100%;border:0;background:transparent;color:var(--ink);font:inherit;text-align:right;padding:0;min-width:0}
+.num input:focus{outline:none}
+.num span{color:var(--muted);font-size:var(--fs-s);flex:none}
+.num .pre{margin-right:4px}.num .post{margin-left:4px}
+.seg{display:inline-flex;border:0;box-shadow:inset 0 0 0 1px var(--rule);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:var(--fs-m);border:0;background:transparent;color:var(--ink);padding:7px 12px;cursor:pointer;white-space:nowrap}
+.seg button:hover:not([aria-pressed="true"]){background:var(--own-soft)}
+.seg.full{display:flex;width:100%}
+.seg.full button{flex:1 1 0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.toggle{display:flex;justify-content:flex-end}
+.toggle input{width:20px;height:20px;accent-color:var(--own)}
+input[type=range]{width:100%;accent-color:var(--own)}
+.horizon-row{grid-template-columns:1fr 60px}
+.horizon-row .val{font-weight:600;text-align:right}
+.horizon-row input[type=range]{grid-column:1 / -1}
+
+/* Results */
+.verdict{background:var(--surface);border-radius:var(--radius);padding:26px 28px 22px;margin-bottom:20px;border-left:6px solid var(--own)}
+.verdict.rent{border-left-color:var(--rent-line)}
+.verdict h2{font-family:var(--serif);font-weight:400;font-size:var(--fs-xl);line-height:1.18;margin:0 0 12px;max-width:24ch;letter-spacing:-0.01em}
+.verdict h2 strong{font-weight:600}
+.verdict p{margin:0;color:var(--muted);max-width:68ch}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:18px;border-top:1px solid var(--rule)}
+.facts div{padding:12px 14px 0 0}
+.facts dt{font-size:var(--fs-xs);color:var(--muted)}
+.facts dd{margin:2px 0 0;font-size:var(--fs-l);font-weight:600}
+@media (max-width:560px){.facts{grid-template-columns:1fr 1fr}.verdict{padding:20px}}
+
+section.block{background:var(--surface);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px}
+section.block h3{font-family:var(--serif);font-weight:600;font-size:var(--fs-l);margin:0 0 4px}
+section.block .sub{color:var(--muted);font-size:var(--fs-s);margin:0 0 14px;max-width:72ch}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.legend{display:flex;gap:16px;font-size:var(--fs-s);color:var(--muted);margin:6px 0 4px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.gapchart{display:flex;flex-direction:column;gap:2px}
+.gaprow{display:grid;grid-template-columns:210px 1fr 58px;gap:10px;align-items:center;width:100%;background:none;border:0;padding:3px 6px;border-radius:var(--radius-sm);color:inherit;font:inherit;font-size:var(--fs-s);text-align:left;cursor:pointer}
+.gaprow:hover{background:var(--bg)}
+.gaprow.sel{background:var(--own-soft);font-weight:600}
+.gaptrack{position:relative;height:14px}
+.gapbar{position:absolute;top:1px;bottom:1px;border-radius:3px;background:var(--muted);opacity:.5}
+.gapbar.est{background:repeating-linear-gradient(45deg,var(--muted) 0 3px,transparent 3px 7px);opacity:.8}
+.gaprow.sel .gapbar{background:var(--own);opacity:1}
+.gapzero{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--ink)}
+.gapval{text-align:right;font-variant-numeric:tabular-nums}
+.gapaxis{display:grid;grid-template-columns:210px 1fr 58px;gap:10px;padding:0 6px;font-size:var(--fs-xs);color:var(--muted)}
+.gapaxis span:nth-child(2){position:relative;height:16px}
+@media (max-width:560px){.gaprow,.gapaxis{grid-template-columns:96px 1fr 48px;gap:6px}}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:var(--fs-xs);padding:8px 10px;border-radius:var(--radius-sm);white-space:nowrap;transform:translate(-50%,-100%);display:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:700px){.grid2{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 16px;margin:0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;text-align:right;font-weight:600}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:var(--fs-s)}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:600;color:var(--muted);font-size:var(--fs-xs)}
+tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
+td.own{color:var(--own)} td.rent{color:var(--rent)}
+.heat td{text-align:center;font-weight:600;border:2px solid var(--surface);padding:9px 6px}
+.heat th{text-align:center;border:0}
+.heat td.cur{outline:2px solid var(--ink);outline-offset:-2px}
+details summary{cursor:pointer;font-weight:600}
+.sources ol{padding-left:20px;margin:0}
+.sources li{margin-bottom:8px;font-size:var(--fs-s)}
+.sources .what{font-weight:600}
+.note{font-size:var(--fs-s);color:var(--muted)}
+.mini-bars{display:flex;align-items:flex-end;gap:2px;height:90px;margin-top:10px}
+.mini-bars div{flex:1;display:flex;flex-direction:column-reverse;min-width:2px}
+.mini-bars span{display:block}.mini-bars .p{background:var(--own)} .mini-bars .i{background:var(--rent-line);opacity:.85}
+.mini-legend{display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--muted);margin-top:4px}
+.sticky-verdict{display:none}
+@media (max-width:900px){
+  .sticky-verdict{display:block;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:var(--bg);
+    font-size:var(--fs-s);padding:8px 14px;border-radius:0 0 8px 8px;margin:-20px -20px 16px}
+}
+.method p{margin:0 0 10px;max-width:74ch}
+.filing-gate{margin-top:16px;display:none}
+.pending .filing-gate{display:inline-flex}
+.pending .facts{display:none}
+main.pending > section.block, main.pending > .grid2{display:none}
+.verdict.gate{border-left-color:var(--muted)}
+.sel{width:100%;font:inherit;padding:8px 10px;border:1px solid var(--rule);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink)}
+.field[hidden]{display:none}
+.field.stack{display:block}
+.field.stack label{display:block;margin-bottom:6px}
+.field.stack .hint{margin-top:6px}
+.revert-only{display:none}
+.mode-revert .revert-only{display:grid}
+.mode-revert #apprField{display:none}
+
+/* Tabs */
+.always{margin-bottom:6px}
+.tabs{display:flex;border-bottom:1px solid var(--rule);margin:2px 0 14px;overflow-x:auto;scrollbar-width:none}
+.tab{flex:1 1 auto;font:inherit;font-size:var(--fs-s);background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:9px 4px 7px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.panel[hidden]{display:none}
+.panel legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.skin{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-xs);color:var(--muted)}
+.skin .seg button{font-size:var(--fs-xs);padding:4px 10px}
+.top-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+@media (max-width:560px){header.top{flex-direction:column;align-items:flex-start;gap:8px}.top-right{align-items:flex-start}}
+.method p,.sources li{font-size:var(--fs-m)}
+
+
+/* Preset-linked fields */
+.field.linked .num{background:var(--own-soft);box-shadow:inset 3px 0 0 var(--own)}
+.field.linked .num input{cursor:default}
+.linkrow{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:var(--fs-xs);color:var(--own);margin-top:-1px}
+.linkrow .unlock{font:inherit;font-size:var(--fs-xs);font-weight:600;background:none;border:0;padding:2px 0;color:var(--own);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.linkrow.open{color:var(--muted)}
+.field.stack .linkrow{margin-top:6px}
+.tab{position:relative}
+.tab.has-linked::after{content:"";position:absolute;top:7px;right:0;width:5px;height:5px;border-radius:50%;background:var(--own)}
+.restore{font:inherit;font-size:var(--fs-xs);font-weight:600;background:none;border:0;padding:0;margin-left:4px;color:var(--own);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.linknote{color:var(--muted);font-size:var(--fs-xs);margin:2px 0 0}
+
+/* Editorial skin */
+:root[data-skin="editorial"]{
+  --bg:#FFFFFF; --surface:#FFFFFF; --ink:#1D1D1B; --muted:#5C5C58; --rule:#D8D8D3;
+  --own:#006BA2; --own-soft:#E1EEF6; --rent:#C0353C; --rent-line:#DB444B; --rent-soft:#FBE4E5;
+  --accent:#E3120B; --focus:#006BA2; --radius:0px; --radius-sm:2px;
+}
+@media (prefers-color-scheme:dark){
+  :root[data-skin="editorial"]:not([data-theme="light"]){
+    --bg:#15171A; --surface:#15171A; --ink:#ECECE8; --muted:#A4A4A0; --rule:#34373C;
+    --own:#56A9DC; --own-soft:#16303F; --rent:#F28A8F; --rent-line:#F07178; --rent-soft:#3E2124; --accent:#FF4B3E; --focus:#56A9DC;
+  }
+}
+:root[data-skin="editorial"][data-theme="dark"]{
+  --bg:#15171A; --surface:#15171A; --ink:#ECECE8; --muted:#A4A4A0; --rule:#34373C;
+  --own:#56A9DC; --own-soft:#16303F; --rent:#F28A8F; --rent-line:#F07178; --rent-soft:#3E2124; --accent:#FF4B3E; --focus:#56A9DC;
+}
+[data-skin="editorial"] body{border-top:5px solid var(--accent)}
+[data-skin="editorial"] header.top{border-bottom:1px solid var(--ink)}
+[data-skin="editorial"] section.block,[data-skin="editorial"] .verdict{padding:16px 0 26px;border-top:1px solid var(--ink);margin-bottom:8px}
+[data-skin="editorial"] section.block h3::before{content:"";display:block;width:34px;height:5px;background:var(--accent);margin-bottom:10px}
+[data-skin="editorial"] .verdict{border-left:0;border-top:4px solid var(--own)}
+[data-skin="editorial"] .verdict.rent{border-top-color:var(--rent-line)}
+[data-skin="editorial"] .verdict.gate{border-top-color:var(--muted)}
+[data-skin="editorial"] .verdict h2{font-weight:700;letter-spacing:-0.015em}
+[data-skin="editorial"] .grid2{gap:32px}
+[data-skin="editorial"] thead th{color:var(--ink);border-bottom:1px solid var(--ink)}
+[data-skin="editorial"] .method p,[data-skin="editorial"] .sources li{font-family:var(--serif);line-height:1.6}
+[data-skin="editorial"] .gaprow:hover{background:var(--own-soft)}
+
+
+/* Statement skin: a clean brokerage statement */
+:root[data-skin="statement"]{
+  --bg:#FFFFFF; --surface:#FFFFFF; --rail:#F3F5F8; --ink:#0F1B2D; --muted:#566273; --rule:#DFE4EA;
+  --own:#0B7A5C; --own-soft:#E2F2EB; --rent:#5443BF; --rent-line:#6252D9; --rent-soft:#ECE9FB;
+  --accent:#0F1B2D; --focus:#3B5BDB; --radius:0px; --radius-sm:4px; --changed:#B4540A; --changed-soft:#FCEBD7;
+}
+@media (prefers-color-scheme:dark){
+  :root[data-skin="statement"]:not([data-theme="light"]){
+    --bg:#0F141B; --surface:#151C25; --rail:#131A22; --ink:#E7ECF2; --muted:#9AA6B5; --rule:#263140;
+    --own:#4CC49A; --own-soft:#123228; --rent:#A99BFF; --rent-line:#A99BFF; --rent-soft:#241F45; --accent:#E7ECF2; --focus:#7C95FF;
+    --changed:#F2B04F; --changed-soft:#3A2A12;
+  }
+}
+:root[data-skin="statement"][data-theme="dark"]{
+  --bg:#0F141B; --surface:#151C25; --rail:#131A22; --ink:#E7ECF2; --muted:#9AA6B5; --rule:#263140;
+  --own:#4CC49A; --own-soft:#123228; --rent:#A99BFF; --rent-line:#A99BFF; --rent-soft:#241F45; --accent:#E7ECF2; --focus:#7C95FF;
+  --changed:#F2B04F; --changed-soft:#3A2A12;
+}
+[data-skin="statement"] header.top h1,[data-skin="statement"] .verdict h2,[data-skin="statement"] section.block h3,[data-skin="statement"] legend{font-family:var(--sans)}
+[data-skin="statement"] header.top h1{font-weight:700;letter-spacing:-0.01em}
+[data-skin="statement"] .verdict h2{font-weight:600;letter-spacing:-0.025em}
+[data-skin="statement"] section.block h3{font-weight:600}
+[data-skin="statement"] .inputs{background:var(--rail);padding:16px 12px 8px;margin:0 -12px;border-radius:6px}
+[data-skin="statement"] section.block,[data-skin="statement"] .verdict{background:transparent;padding:20px 0 28px;border-top:1px solid var(--rule);margin-bottom:4px}
+[data-skin="statement"] .verdict{border-left:0;border-top:3px solid var(--own)}
+[data-skin="statement"] .verdict.rent{border-top-color:var(--rent-line)}
+[data-skin="statement"] .verdict.gate{border-top-color:var(--muted)}
+[data-skin="statement"] .grid2{gap:32px}
+[data-skin="statement"] .facts dd{font-size:var(--fs-l)}
+[data-skin="statement"] .gaprow:hover{background:var(--rail)}
+
+
+/* Blueprint skin: an architect's drawing sheet, the same in light and dark */
+:root[data-skin="blueprint"],:root[data-skin="blueprint"][data-theme]{
+  --bg:#0E3A63; --surface:#124674; --ink:#EEF4FA; --muted:#A9C4DE; --rule:#3F6B95;
+  --own:#FFFFFF; --own-soft:#1F5689; --rent:#FFCB52; --rent-line:#FFCB52; --rent-soft:#3D5263;
+  --accent:#FFCB52; --focus:#FFCB52; --radius:0px; --radius-sm:0px; --grid:rgba(255,255,255,.06);
+}
+@media (prefers-color-scheme:dark){
+  :root[data-skin="blueprint"]:not([data-theme="light"]){
+    --bg:#0E3A63; --surface:#124674; --ink:#EEF4FA; --muted:#A9C4DE; --rule:#3F6B95;
+    --own:#FFFFFF; --own-soft:#1F5689; --rent:#FFCB52; --rent-line:#FFCB52; --rent-soft:#3D5263; --accent:#FFCB52; --focus:#FFCB52;
+  }
+}
+[data-skin="blueprint"] body{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+[data-skin="blueprint"] header.top{border-bottom:1px solid var(--rule)}
+[data-skin="blueprint"] section.block,[data-skin="blueprint"] .verdict{background:var(--bg);border:1px solid var(--rule)}
+[data-skin="blueprint"] .verdict{border-left:3px solid var(--own)}
+[data-skin="blueprint"] .verdict.rent{border-left-color:var(--rent-line)}
+[data-skin="blueprint"] .verdict.gate{border-left-color:var(--muted)}
+[data-skin="blueprint"] .num,[data-skin="blueprint"] .sel{border-color:var(--rule)}
+[data-skin="blueprint"] .gaprow:hover{background:var(--own-soft)}
+[data-skin="blueprint"] .skin .seg button,[data-skin="blueprint"] .tabs{border-color:var(--rule)}
+.skin .seg{flex-wrap:wrap}
+
+/* "Changed from preset" color, per theme */
+:root{--changed:#7A3E9D;--changed-soft:#EEE3F4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--changed:#C9A2E0;--changed-soft:#33263D}}
+:root[data-theme="dark"]{--changed:#C9A2E0;--changed-soft:#33263D}
+:root[data-skin="editorial"]{--changed:#B45309;--changed-soft:#FBEBD6}
+@media (prefers-color-scheme:dark){:root[data-skin="editorial"]:not([data-theme="light"]){--changed:#F2B04F;--changed-soft:#3A2A12}}
+:root[data-skin="editorial"][data-theme="dark"]{--changed:#F2B04F;--changed-soft:#3A2A12}
+:root[data-skin="blueprint"],:root[data-skin="blueprint"][data-theme]{--changed:#7BE3D2;--changed-soft:#1D5A6A}
+@media (prefers-color-scheme:dark){:root[data-skin="blueprint"]:not([data-theme="light"]){--changed:#7BE3D2;--changed-soft:#1D5A6A}}
+.field.changed .num{background:var(--changed-soft);box-shadow:inset 3px 0 0 var(--changed)}
+.field.changed .seg{box-shadow:inset 0 0 0 2px var(--changed)}
+.field.changed .linkrow,.field.changed .linkrow .unlock{color:var(--changed)}
+.tab.has-changed::after{content:"";position:absolute;top:7px;right:0;width:5px;height:5px;border-radius:50%;background:var(--changed)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.results,.inputs{min-width:0}
+</style>
+</head>
+<body>
+<script>(function(){var s="editorial";try{var v=localStorage.getItem("rvb-skin");if(["editorial","statement","blueprint"].indexOf(v)>=0)s=v}catch(e){}document.documentElement.dataset.skin=s})()</script>
+<div class="wrap">
+  <header class="top">
+    <h1>Rent or Buy</h1>
+    <div class="top-right">
+      <p>Defaults as of {{AS_OF}}. Every number is editable.</p>
+      <div class="skin"><span id="skinLabel">Theme</span><div class="seg" role="group" aria-labelledby="skinLabel"><button type="button" data-skinbtn="editorial" aria-pressed="true">Editorial</button><button type="button" data-skinbtn="statement" aria-pressed="false">Statement</button><button type="button" data-skinbtn="blueprint" aria-pressed="false">Blueprint</button></div></div>
+    </div>
+  </header>
+  <div class="sticky-verdict" id="stickyVerdict" aria-hidden="true"></div>
+
+  <div class="layout">
+    <aside class="inputs" aria-label="Model inputs">
+      <div class="always">
+      <fieldset>
+        <legend>How Long You Stay</legend>
+        <div class="field horizon-row"><label for="horizon">Years Until You Sell</label><div class="val" id="horizonVal">30</div><input type="range" id="horizon" min="1" max="50" step="1" value="30"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Show Values In</legend>
+        <div class="seg full" role="group" aria-label="Dollar basis"><button type="button" data-basis="nominal" aria-pressed="true">Future Dollars</button><button type="button" data-basis="real" aria-pressed="false">Today's Dollars</button></div>
+      </fieldset>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Input categories"><button type="button" class="tab" role="tab" id="tab0" aria-controls="panel0" aria-selected="true" tabindex="0">Presets</button><button type="button" class="tab" role="tab" id="tab1" aria-controls="panel1" aria-selected="false" tabindex="-1">Home</button><button type="button" class="tab" role="tab" id="tab2" aria-controls="panel2" aria-selected="false" tabindex="-1">Owning</button><button type="button" class="tab" role="tab" id="tab3" aria-controls="panel3" aria-selected="false" tabindex="-1">Renting</button><button type="button" class="tab" role="tab" id="tab4" aria-controls="panel4" aria-selected="false" tabindex="-1">Markets</button><button type="button" class="tab" role="tab" id="tab5" aria-controls="panel5" aria-selected="false" tabindex="-1">Taxes</button></div>
+      <div class="panel" role="tabpanel" id="panel0" aria-labelledby="tab0"><fieldset>
+        <legend>Scenario Presets</legend>
+        <div class="field stack"><label for="selMarket">Market</label><select id="selMarket" class="sel"><option value="custom">Custom (Use My Inputs)</option></select><div class="hint" id="marketHint">Sets price, rent, property tax and any assessment cap, rent growth, and how stretched prices are versus rents, from public data for that metro.</div></div>
+        <div class="field stack"><label for="income">Household Income</label><div class="num"><span class="pre">$</span><input id="income" inputmode="decimal" data-kind="money" value="" placeholder="optional"><span class="post">/yr</span></div><div class="hint" id="incomeHint">Before tax. Sets your federal bracket, state and local income tax, and capital gains rate from 2026 tax rules, using your filing status and the market's state. Leave blank to enter those yourself in Taxes.</div></div>
+        <div class="field" id="cityField" hidden><label for="inCity" id="inCityLabel">Live Inside the City</label><div class="toggle"><input type="checkbox" id="inCity"></div><div class="hint" id="cityHint"></div></div>
+        <div class="field stack"><label for="selPath">Home Price Path</label><select id="selPath" class="sel">
+          <option value="custom">Custom (Use My Inputs)</option>
+          <option value="withRents">Prices Track Rents</option>
+          <option value="trend">Local Historical Trend</option>
+          <option value="slow">Slow Reversion (Half-Life 24 Years)</option>
+          <option value="typical">Typical Reversion (Half-Life 11 Years)</option>
+          <option value="crash">Fast Reversion (Half-Life 2 Years)</option>
+        </select><div class="hint" id="pathHint"></div></div>
+        <div class="field stack"><label for="selRet">Investment Return</label><select id="selRet" class="sel">
+          <option value="custom">Custom (Use My Inputs)</option>
+          <option value="0.05">Conservative: 5% (Vanguard 10-Year Forecast)</option>
+          <option value="0.07">Moderate: 7% (Between Forecast and History)</option>
+          <option value="0.10">Historical: 10% (S&amp;P 500 Since 1928)</option>
+        </select><div class="hint" id="retHint"></div></div>
+        <p class="linknote" id="linkNote"></p>
+      </fieldset></div>
+      <div class="panel" role="tabpanel" id="panel1" aria-labelledby="tab1" hidden><fieldset>
+        <legend>The Home and the Loan</legend>
+        <div class="field"><label for="price">Home Price</label><div class="num"><span class="pre">$</span><input id="price" inputmode="decimal" data-kind="money" value="500,000"></div></div>
+        <div class="field"><label for="down">Down Payment</label><div class="num"><input id="down" inputmode="decimal" data-kind="pct" value="20"><span class="post">%</span></div><div class="hint" id="downHint"></div></div>
+        <div class="field stack"><label>Loan Term</label><div class="seg full" role="group" aria-label="Loan term"><button type="button" data-term="15" aria-pressed="false">15 yr</button><button type="button" data-term="30" aria-pressed="true">30 yr</button></div></div>
+        <div class="field"><label for="rate">Mortgage Rate</label><div class="num"><input id="rate" inputmode="decimal" data-kind="pct" value="{{RATE30}}"><span class="post">%</span></div><div class="hint">Freddie Mac weekly average, {{RATE_WEEK}}: {{RATE30}}% (30 yr), {{RATE15}}% (15 yr), for 20% down and excellent credit.</div></div>
+        <div class="field"><label for="closing">Buyer Closing Costs</label><div class="num"><input id="closing" inputmode="decimal" data-kind="pct" value="2.5"><span class="post">% of price</span></div></div>
+      </fieldset></div>
+      <div class="panel" role="tabpanel" id="panel2" aria-labelledby="tab2" hidden><fieldset>
+        <legend>Owning Costs</legend>
+        <div class="field"><label for="propTax">Property Tax</label><div class="num"><input id="propTax" inputmode="decimal" data-kind="pct" value="0.9"><span class="post">%/yr</span></div><div class="hint">US average effective rate is about 0.89%. Use your county's.</div></div>
+        <div class="field"><label for="assessCap">Cap on Taxable Value Growth</label><div class="num"><input id="assessCap" inputmode="decimal" data-kind="pct" value="" placeholder="none"><span class="post">%/yr</span></div><div class="hint">California (Prop 13): 2%, and your rate is about 1.1% to 1.2% of the purchase price in San Diego County. Leave blank where homes are reassessed at market value each year, as in Virginia.</div></div>
+        <div class="field"><label for="ins">Homeowners Insurance</label><div class="num"><input id="ins" inputmode="decimal" data-kind="pct" value="0.5"><span class="post">%/yr</span></div><div class="hint">Percent of purchase price in year one, then grows with inflation (it tracks rebuild cost, not land value). Get a quote.</div></div>
+        <div class="field"><label for="maint">Maintenance and Repairs</label><div class="num"><input id="maint" inputmode="decimal" data-kind="pct" value="1.0"><span class="post">%/yr</span></div><div class="hint">Same basis as insurance: purchase price, grown with inflation.</div></div>
+        <div class="field"><label for="hoa">HOA Dues</label><div class="num"><span class="pre">$</span><input id="hoa" inputmode="decimal" data-kind="money" value="0"><span class="post">/mo</span></div></div>
+        <div class="field"><label for="pmiRate">PMI (If Under 20% Down)</label><div class="num"><input id="pmiRate" inputmode="decimal" data-kind="pct" value="0.5"><span class="post">% of loan</span></div></div>
+      </fieldset></div>
+      <div class="panel" role="tabpanel" id="panel3" aria-labelledby="tab3" hidden><fieldset>
+        <legend>Renting</legend>
+        <div class="field"><label for="rent0">Monthly Rent Today</label><div class="num"><span class="pre">$</span><input id="rent0" inputmode="decimal" data-kind="money" value="2,500"></div><div class="hint">For a comparable home. This is the input that moves the answer most.</div></div>
+        <div class="field"><label for="rentGrowth">Rent Growth</label><div class="num"><input id="rentGrowth" inputmode="decimal" data-kind="pct" value="3.5"><span class="post">%/yr</span></div></div>
+        <div class="field"><label for="rentIns">Renter's Insurance</label><div class="num"><span class="pre">$</span><input id="rentIns" inputmode="decimal" data-kind="money" value="15"><span class="post">/mo</span></div></div>
+      </fieldset></div>
+      <div class="panel" role="tabpanel" id="panel4" aria-labelledby="tab4" hidden><fieldset>
+        <legend>Markets and the Sale</legend>
+        <div class="field stack"><label>Home Prices</label><div class="seg full" role="group" aria-label="Home price path"><button type="button" data-pmode="fixed" aria-pressed="true">Set Rate</button><button type="button" data-pmode="revert" aria-pressed="false">Revert to Norm</button></div></div>
+        <div class="field" id="apprField"><label for="appr">Home Appreciation</label><div class="num"><input id="appr" inputmode="decimal" data-kind="pct" value="4.0"><span class="post">%/yr</span></div></div>
+        <div class="field revert-only"><label for="overval">Price-to-Rent vs Its Long-Run Norm</label><div class="num"><input id="overval" inputmode="decimal" data-kind="pct" value="29.4"><span class="post">% above</span></div><div class="hint">How far today's price-to-rent ratio sits above (or below) this metro's 1990 to 2019 average. The chart lists all 18 metros. Use a negative number if below.</div></div>
+        <div class="field revert-only"><label for="halfLife">Half-Life of the Gap</label><div class="num"><input id="halfLife" inputmode="decimal" data-kind="pct" value="11"><span class="post">yrs</span></div><div class="hint" id="revertHint"></div></div>
+        <div class="field"><label for="invRet">Investment Return</label><div class="num"><input id="invRet" inputmode="decimal" data-kind="pct" value="7.0"><span class="post">%/yr</span></div><div class="hint">S&amp;P 500 averaged 10.0% a year (1928 to 2025). Vanguard's 10-year US forecast ranged from about 4% to 6% in 2026.</div></div>
+        <div class="field"><label for="divYield">Dividend Yield, Taxed Yearly</label><div class="num"><input id="divYield" inputmode="decimal" data-kind="pct" value="1.1"><span class="post">%/yr</span></div><div class="hint">Part of the investment return, not added to it. S&amp;P 500 yield is about 1.06% today. Set to 0 if the money would sit in a 401(k) or IRA.</div></div>
+        <div class="field"><label for="infl">Inflation</label><div class="num"><input id="infl" inputmode="decimal" data-kind="pct" value="2.8"><span class="post">%/yr</span></div></div>
+        <div class="field"><label for="sellCost">Selling Costs</label><div class="num"><input id="sellCost" inputmode="decimal" data-kind="pct" value="6.0"><span class="post">% of sale</span></div></div>
+      </fieldset></div>
+      <div class="panel" role="tabpanel" id="panel5" aria-labelledby="tab5" hidden><fieldset>
+        <legend>Taxes</legend>
+        <div class="field stack"><label>Filing Status</label><div class="seg full" role="group" aria-label="Filing status"><button type="button" data-filing="single" aria-pressed="false">Single</button><button type="button" data-filing="mfj" aria-pressed="true">Joint</button></div><div class="hint" id="filingHint">Set to Married Filing Jointly. Switch to Single if you file alone: it moves the answer by six figures.</div></div>
+        <div class="field"><label for="itemize">Itemize When It Beats the Standard Deduction</label><div class="toggle"><input type="checkbox" id="itemize"></div><div class="hint" id="itemHint"></div></div>
+        <div class="field"><label for="margRate">Federal Marginal Rate</label><div class="num"><input id="margRate" inputmode="decimal" data-kind="pct" value="24"><span class="post">%</span></div></div>
+        <div class="field"><label for="stateLocalTax">State and Local Income Tax You Pay</label><div class="num"><span class="pre">$</span><input id="stateLocalTax" inputmode="decimal" data-kind="money" value="0"><span class="post">/yr</span></div></div>
+        <div class="field"><label for="otherItem">Other Itemized Deductions (Charity)</label><div class="num"><span class="pre">$</span><input id="otherItem" inputmode="decimal" data-kind="money" value="0"><span class="post">/yr</span></div></div>
+        <div class="field"><label for="cgRate">Capital Gains Tax Rate</label><div class="num"><input id="cgRate" inputmode="decimal" data-kind="pct" value="15"><span class="post">%</span></div><div class="hint">Applied to investment gains and to home gains above the $250k ($500k joint) exclusion.</div></div>
+      </fieldset></div>
+    </aside>
+
+    <main class="results" id="results">
+      <div class="verdict" id="verdict">
+        <h2 id="verdictLine"></h2>
+        <p id="verdictSub"></p>
+        <div class="seg filing-gate" id="filingGate" role="group" aria-label="Filing status"><button type="button" data-filing="single" aria-pressed="false">Single</button><button type="button" data-filing="mfj" aria-pressed="true">Married Filing Jointly</button></div>
+        <dl class="facts" id="facts"></dl>
+      </div>
+
+      <section class="block">
+        <div class="chart-head">
+          <div>
+            <h3>Net Worth if You Sold in a Given Year</h3>
+            <p class="sub">After selling costs, the remaining mortgage, and capital gains tax. Both paths spend the same cash each month; whichever is cheaper invests the difference.</p>
+          </div>
+        </div>
+        <div class="legend"><span><i style="background:var(--own)"></i>Buy</span><span><i style="background:var(--rent-line)"></i>Rent and Invest</span></div>
+        <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
+      </section>
+
+      <section class="block" id="gapBlock">
+        <h3>How Stretched Each Market Is: Prices Versus Rents</h3>
+        <p class="sub">Each bar compares a metro's home prices to its rents today against that metro's own 1990 to 2019 average (FHFA home price index divided by the BLS rent index). +30% means a dollar of rent buys about 30% less house than it typically did there. This measures prices relative to rents, not prices relative to their own history, so a metro can rank low here (Detroit, where rents rose almost as fast as prices) even when its prices are far above their past trend. Moving the norm to 2000 to 2019, which includes the 2000s bubble, lowers most bars by 5 to 14 points but barely changes the ranking. The reversion price paths assume this premium shrinks over time, so prices grow more slowly than rents until it closes; the bigger the bar, the bigger that drag. Click a bar to pick that market. Hatched bars are placeholder estimates.</p>
+        <div class="gapchart" id="gapChart"></div>
+      </section>
+
+      <div class="grid2">
+        <section class="block">
+          <h3>The Mortgage</h3>
+          <p class="sub" id="mortSub"></p>
+          <dl class="kv" id="mortKv"></dl>
+          <div class="mini-bars" id="miniBars" aria-hidden="true"></div>
+          <div class="mini-legend"><span>Year 1</span><span><span style="color:var(--own)">■</span> principal <span style="color:var(--rent-line)">■</span> interest</span><span id="miniEnd"></span></div>
+        </section>
+        <section class="block">
+          <h3>Monthly Cash, First Year</h3>
+          <p class="sub">Average month in year one, after the tax savings from itemizing.</p>
+          <dl class="kv" id="monthKv"></dl>
+        </section>
+      </div>
+
+      <section class="block">
+        <h3 id="costTitle">Money You Don't Get Back</h3>
+        <p class="sub">Interest, taxes, insurance, upkeep, and transaction costs for owning, against rent for renting. Principal is excluded because it comes back to you as equity. The opportunity cost of your cash shows up in the net worth result instead.</p>
+        <div class="scroll"><table id="costTable"></table></div>
+      </section>
+
+      <section class="block">
+        <h3>What Would Change the Answer</h3>
+        <p class="sub" id="heatSub"></p>
+        <div class="scroll"><table class="heat" id="heat"></table></div>
+      </section>
+
+      <section class="block">
+        <details>
+          <summary>Year-by-year detail</summary>
+          <div class="scroll" style="margin-top:12px"><table id="yearTable"></table></div>
+        </details>
+      </section>
+
+      <section class="block method">
+        <h3>How the Model Works</h3>
+        <p>The model runs month by month. On day one, the buyer pays the down payment and closing costs; the renter invests that same amount. Each month both households spend the same total: the buyer pays principal, interest, property tax, insurance, maintenance, HOA, and PMI (less any tax savings from itemizing), and the renter pays rent and renter's insurance. Whoever has the cheaper month invests the difference at the investment return. Dividends are part of that return; they are taxed each year at the capital gains rate and the rest is reinvested.</p>
+        <p>Property tax is a percentage of the home's market value at the start of each year, so it rises as the home appreciates, unless you set a cap on taxable value growth (California's Prop 13 limits it to 2% a year from the purchase price, never above market value). Insurance and maintenance start as percentages of the purchase price and then grow with inflation, because they track what it costs to repair or rebuild the structure, not the value of the land under it. Rent rises at the rent growth rate. PMI applies only below 20% down and stops when the scheduled balance reaches 78% of the purchase price or at the midpoint of the loan term, whichever comes first. The tax benefit is the real one: your marginal rate times how far mortgage interest plus property tax (with the SALT cap) push you above the standard deduction, compared to what you'd itemize as a renter.</p>
+        <p>Home prices follow one of two paths. With a set rate, they grow at the appreciation input every year. With revert to norm, the model starts from today's price-to-rent ratio (price divided by a year of rent) and closes the gap to the market's long-run norm by half every half-life, so prices grow with rents times the shrinking gap. The presets come from the data: across 18 metros, the price-to-rent gap closed by half about every 11 years on 1990 to 2019 data and every 24 years including the 2020s; the 2000s booms unwound in 4 to 8 years. Gaps also tend to widen further before they close, which this smooth path does not capture.</p>
+        <p>At the sale, the buyer gets the home's value minus selling costs, the remaining loan, and tax on any gain above the home sale exclusion, plus their own portfolio after capital gains tax. The renter gets their portfolio after capital gains tax.</p>
+        <p class="note">Simplifications: returns are smooth (real markets are volatile, and stocks far more than an index of home prices); no refinancing; property tax tracks market value (some states cap assessments); dividends are taxed at the capital gains rate (true for qualified dividends) and the remaining investment gains are taxed once at the sale; the SALT phase-down above $505k of income and the income-limited PMI deduction are not modeled; all buyer closing costs are treated as cost basis. The model also assumes the renter actually invests the savings, which is the behavioral assumption that most often fails in real life.</p>
+      </section>
+
+      <section class="block sources">
+        <h3>Assumptions and Sources</h3>
+        <p class="sub">Filing status has no default on purpose. Other defaults are national figures. Replace the property tax, insurance, rent, and appreciation inputs with local numbers for a real decision. This is a model, not financial advice.</p>
+        <ol>
+          <li><span class="what">Mortgage rate {{RATE30}}% (30 yr) and {{RATE15}}% (15 yr).</span> Freddie Mac Primary Mortgage Market Survey, week of {{RATE_WEEK}}. <a href="https://www.freddiemac.com/pmms" target="_blank" rel="noopener">Release</a></li>
+          <li><span class="what">Home appreciation 4.0%.</span> FHFA All-Transactions House Price Index grew 5.0% a year from Q1 1975 to Q1 2026, 4.3% from 1985, and 3.4% from the 2006 peak. Damodaran's real estate series grew 4.2% a year from 1928 to 2025. National prices rose 2.1% in the year to Q2 2026. Default sits mid-range. <a href="https://fred.stlouisfed.org/series/USSTHPI" target="_blank" rel="noopener">FHFA via FRED</a>, <a href="https://www.fhfa.gov/news/news-release/u.s.-house-prices-rise-2.1-percent-year-over-year-up-0.3-percent-quarter-over-quarter" target="_blank" rel="noopener">FHFA Q2 2026</a></li>
+          <li><span class="what">California Prop 13.</span> Assessed value starts at the purchase price and rises by the lower of California inflation or 2% a year; the tax rate is 1% plus voter-approved bonds and assessments, and Mello-Roos special taxes can apply in newer suburbs. <a href="https://www.sdttc.com/content/dam/ttc/docs/new-homeowners-property-tax-guide.pdf" target="_blank" rel="noopener">San Diego County Treasurer</a>, <a href="https://assessor.saccounty.gov/TopicsAtoZ/Pages/Prop13andRealPropertyAssessment.aspx" target="_blank" rel="noopener">Sacramento County Assessor</a></li>
+          <li><span class="what">Price-to-rent gaps by market.</span> My calculation: FHFA metro house price index divided by the BLS metro rent index, the latest year (2025; 2024 for Atlanta and Tampa, whose FHFA series end there) versus each metro's 1990 to 2019 average, on a log basis. Across the 18 metros, gaps run from +3% (Chicago) to +55% (Miami), with most between +20% and +40%; the chart shows them all. Washington uses a 1997 to 2018 baseline because its BLS rent series was spliced in 2018. Starting the norm in 2000 instead of 1990 lowers most gaps by 5 to 14 points but barely changes the ranking. Nearly every metro is elevated, which points to a national cause (the 2020 to 2022 boom) more than local ones.</li>
+          <li><span class="what">How fast gaps close.</span> My estimate from 18 metro histories (FHFA price index over BLS rent index), pooled with each metro's own 1990 to 2019 norm: the log gap closes by half about every 11 years on 1990 to 2019 data (90% range across resampled sets of metros: 9 to 13) and about every 24 years when the 2020s are included (18 to 39). In the 2000s bust, price-to-rent fell from peak to trough in 4 to 8 years (median 6) across 19 metros. Gaps can also widen further before closing, which a smooth path does not capture.</li>
+          <li><span class="what">Market preset prices, rents, and taxes.</span> Prices: NAR median single-family sale prices, second quarter 2026 (NAR Metropolitan Median Area Prices, as compiled by HSH.com), chosen to match a 3-bedroom rent; Honolulu, which that list omits, uses the Honolulu Board of Realtors' Oahu single-family median for January to August 2026. Metros without a fully sourced price, rent, and 30-year history (Anchorage, Baltimore, Phoenix, Riverside, Seattle) are left out. Rents: HUD FY2026 Fair Market Rents, 3 bedrooms. These are 40th-percentile gross rents, which include utilities, while the model charges neither side for utilities; and they are mostly apartments and townhomes, so a single-family house usually rents for more. The two effects pull in opposite directions. Taxes: county rates for San Diego, Fairfax, and Honolulu; statewide effective rates from the 2024 Census survey elsewhere. <a href="https://www.huduser.gov/portal/datasets/fmr/fmr2026/FY2026_FMR_Schedule.pdf" target="_blank" rel="noopener">HUD FY2026 schedule</a></li>
+          <li><span class="what">Investment return 7.0%.</span> My judgment call between two vetted anchors: the S&amp;P 500 compounded at 10.0% a year from 1928 to 2025 with dividends reinvested (NYU Stern, Damodaran), and Vanguard's 10-year forecast for US stocks, which ranged from about 4% to 6% across its 2026 updates. The sensitivity grid shows 4% to 10%. <a href="https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/histretSP.html" target="_blank" rel="noopener">Damodaran</a>, <a href="https://corporate.vanguard.com/content/corporatesite/us/en/corp/who-we-are/pressroom/press-release-vanguard-releases-2026-economic-and-market-outlook-121025.html" target="_blank" rel="noopener">Vanguard</a></li>
+          <li><span class="what">Dividend yield 1.1%.</span> Multpl, using S&amp;P data: about 1.06% at the end of Sep 2026 and 1.15% at the end of 2025. Historically much higher, so this is a low-drag assumption. <a href="https://www.multpl.com/s-p-500-dividend-yield/table/by-year" target="_blank" rel="noopener">Multpl</a></li>
+          <li><span class="what">Rent growth 3.5% and inflation 2.8%.</span> BLS CPI for rent of primary residence rose from 100 (1982 to 1984 base) to 441.7 in Jan 2026, about 3.55% a year; all-items CPI rose to 325.3, about 2.81% a year. <a href="https://fred.stlouisfed.org/series/CUUR0000SEHA" target="_blank" rel="noopener">Rent CPI</a>, <a href="https://fred.stlouisfed.org/series/cpiaucns" target="_blank" rel="noopener">CPI-U</a></li>
+          <li><span class="what">Property tax 0.9%.</span> NAHB analysis of the 2024 American Community Survey: $370.0B in real estate taxes on $41.7T of owner-occupied home value, or $8.88 per $1,000. <a href="https://eyeonhousing.org/2025/11/property-taxes-by-state-2024/" target="_blank" rel="noopener">NAHB</a></li>
+          <li><span class="what">Homeowners insurance 0.5% of purchase price, grown with inflation.</span> My estimate. The latest regulator data (NAIC, 2022 data year) shows premiums rising more than 10% that year, and premiums vary several-fold by state. Get a quote. <a href="https://content.naic.org/index.php/article/naic-releases-homeowners-insurance-report-2022" target="_blank" rel="noopener">NAIC</a></li>
+          <li><span class="what">Maintenance 1.0% of purchase price, grown with inflation.</span> Harvard JCHS estimates owners spend about $472B a year on improvements and repairs, roughly 1.1% of the $41.7T housing stock, and about half of improvement spending is necessary replacements. <a href="https://jchs.harvard.edu/blog/turn-growth-expected-residential-remodeling" target="_blank" rel="noopener">JCHS</a></li>
+          <li><span class="what">Closing costs 2.5%.</span> LodeStar's 2026 report puts title, settlement, recording, and transfer taxes at 1.04% of price on average; lender fees (origination, appraisal, points) come on top, so 2.5% is my all-in estimate. <a href="https://www.lodestarss.com/?p=17088" target="_blank" rel="noopener">LodeStar</a></li>
+          <li><span class="what">Selling costs 6.0%.</span> A Federal Reserve note found the average buyer-agent commission fell from about 3% in the late 1990s to about 2.7%. It does not observe seller-side commissions; the authors think the total is likely double the buyer side because splits are usually even. Its data end in 2023, before the 2024 rule changes, and rates run lower in high-price areas such as the Northeast and California. Seller closing and transfer costs make up the rest. <a href="https://www.federalreserve.gov/econres/notes/feds-notes/commissions-and-omissions-trends-in-real-estate-broker-compensation-20250512.html" target="_blank" rel="noopener">Federal Reserve</a></li>
+          <li><span class="what">PMI 0.5% of the loan.</span> Urban Institute range is 0.46% to 1.5% a year depending on credit score; 0.5% assumes strong credit. Auto-cancellation at 78% of original value is federal law. <a href="https://www.experian.com/blogs/ask-experian/how-much-does-private-mortgage-insurance-pmi-cost" target="_blank" rel="noopener">Urban Institute via Experian</a></li>
+          <li><span class="what">Standard deduction $16,100 single, $32,200 joint (2026), grown with inflation.</span> <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener">IRS</a></li>
+          <li><span class="what">SALT cap $40,400 in 2026, up 1% a year through 2029, back to $10,000 in 2030.</span> <a href="https://www.journalofaccountancy.com/news/2025/jul/tax-changes-in-senate-budget-reconciliation-bill/" target="_blank" rel="noopener">Journal of Accountancy</a></li>
+          <li><span class="what">Mortgage interest deductible on up to $750,000 of acquisition debt, now permanent.</span> <a href="https://www.cpapracticeadvisor.com/2025/07/10/the-tax-blotter-obbba-july-2025/164671/" target="_blank" rel="noopener">CPA Practice Advisor</a></li>
+          <li><span class="what">Home sale exclusion $250,000 single, $500,000 joint, after 2 of 5 years as your main home.</span> <a href="https://www.irs.gov/taxtopics/tc701" target="_blank" rel="noopener">IRS Topic 701</a></li>
+          <li><span class="what">Capital gains rate 15%.</span> The middle long-term bracket for most households in 2026 (0%, 15%, 20%). <a href="https://www.kiplinger.com/taxes/irs-updates-capital-gains-tax-thresholds" target="_blank" rel="noopener">Kiplinger summary of IRS Rev. Proc. 2025-32</a></li>
+        </ol>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+/*ENGINE*/
+/*TAXJS*/
+</script>
+<script>
+(function(){
+  const TAX = makeTax(/*TAXDATA*/);
+  const $ = id => document.getElementById(id);
+  const state = { term: 30, filing: "mfj", basis: "nominal", pmode: "fixed" };
+  const RATE_DEFAULT = { 15: {{RATE15}}, 30: {{RATE30}} };
+
+  function parseNum(el){ const v = parseFloat(String(el.value).replace(/[^0-9.\-]/g, "")); return isFinite(v) ? v : 0; }
+  function readInputs(){
+    const pct = id => parseNum($(id)) / 100, money = id => parseNum($(id));
+    return {
+      price: Math.max(1, money("price")), down: Math.min(Math.max(pct("down"), 0), 1), rate: Math.max(pct("rate"), 0), term: state.term,
+      closing: pct("closing"), propTax: pct("propTax"), ins: pct("ins"), maint: pct("maint"), hoa: money("hoa"),
+      pmiRate: pct("pmiRate"), appr: pct("appr"), sellCost: pct("sellCost"), rent0: money("rent0"),
+      rentGrowth: pct("rentGrowth"), rentIns: money("rentIns"), invRet: pct("invRet"), infl: pct("infl"),
+      horizon: parseInt($("horizon").value, 10), filing: state.filing, margRate: pct("margRate"),
+      stateLocalTax: money("stateLocalTax"), otherItem: money("otherItem"), cgRate: pct("cgRate"), itemize: $("itemize").checked,
+      divYield: pct("divYield"), priceMode: state.pmode, overval: pct("overval"),
+      assessCap: String($("assessCap").value).trim() === "" ? null : pct("assessCap"),
+      halfLife: Math.max(0.5, parseNum($("halfLife")))
+    };
+  }
+
+  const fmt0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  function usd(v){ const s = v < 0 ? "-" : ""; return s + "$" + fmt0.format(Math.abs(Math.round(v))); }
+  function short(v){
+    const a = Math.abs(v), s = v < 0 ? "-" : "";
+    if (a >= 1e6) return s + "$" + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + "M";
+    if (a >= 1e3) return s + "$" + Math.round(a / 1e3) + "k";
+    return s + "$" + Math.round(a);
+  }
+  const pctf = (v, d = 1) => (v * 100).toFixed(d) + "%";
+
+  function render(){
+    const p = readInputs();
+    $("horizonVal").textContent = p.horizon;
+    $("downHint").textContent = usd(p.price * p.down) + " down, " + usd(p.price * (1 - p.down)) + " loan" + (p.down < 0.2 ? ". PMI applies." : ".");
+    const gated = !state.filing;
+    $("results").classList.toggle("pending", gated);
+    $("verdict").classList.toggle("gate", gated);
+    if (gated) {
+      $("verdictLine").textContent = "Choose your filing status to see the result.";
+      $("verdictSub").textContent = "It changes the answer more than almost any other input. A single filer gets a sizable tax break from mortgage interest; a joint filer usually gets almost none, because the $32,200 joint standard deduction absorbs it. Joint filers also exclude up to $500,000 of home-sale gain instead of $250,000.";
+      $("stickyVerdict").textContent = "Choose a filing status to see the result";
+      $("itemHint").textContent = "";
+      return;
+    }
+    const real = state.basis === "real";
+    const revert = p.priceMode === "revert";
+    if (revert) {
+      const g = apprInYear(p, 1), r0 = p.price / (p.rent0 * 12);
+      const left = y => Math.pow(1 + p.overval, Math.pow(0.5, y / p.halfLife)) - 1;
+      $("revertHint").textContent = `Years for the gap to close by half. Today's ratio is ${r0.toFixed(1)} years of rent; the norm is ${(r0 / (1 + p.overval)).toFixed(1)}. Gap left: ${pctf(left(5))} after 5 years, ${pctf(left(10))} after 10. Prices grow ${pctf(g)} in year 1, approaching rent growth (${pctf(p.rentGrowth)}).`;
+    }
+    const defl = y => real ? Math.pow(1 + p.infl, y) : 1;
+
+    const r = run(p);                         // to horizon
+    const path = run({ ...p, horizon: 50 }).years; // full path for chart and crossover
+    const H = p.horizon;
+    const diff = (r.ownerNW - r.renterNW) / defl(H);
+    const buyWins = diff >= 0;
+
+    // crossover: first year after which buying stays ahead through the horizon (or 50)
+    let cross = null;
+    for (let y = 1; y <= 50; y++) {
+      let ok = true;
+      for (let z = y; z <= 50; z++) if (path[z - 1].ownerNW < path[z - 1].renterNW) { ok = false; break; }
+      if (ok) { cross = y; break; }
+    }
+    const beRet = breakeven(p, "invRet", -0.05, 0.30);
+    const beApp = revert ? null : breakeven(p, "appr", -0.08, 0.20);
+
+    // Verdict
+    const v = $("verdict");
+    v.classList.toggle("rent", !buyWins);
+    const yrs = H === 1 ? "1 year" : H + " years";
+    $("verdictLine").innerHTML = buyWins
+      ? `If you sell after ${yrs}, buying leaves you <strong>${short(diff)}</strong> ahead of renting.`
+      : `If you sell after ${yrs}, renting and investing leaves you <strong>${short(-diff)}</strong> ahead of buying.`;
+    let sub = "";
+    if (cross === null) sub = "Under these inputs, buying never pulls ahead within 50 years.";
+    else if (cross <= H) sub = `Buying pulls ahead for good in year ${cross}.`;
+    else sub = `Buying would pull ahead in year ${cross}, after you plan to sell.`;
+    if (beRet.found) sub += ` Renting wins if your investments earn more than ${pctf(beRet.value)} a year; buying wins below that.`;
+    $("verdictSub").textContent = sub;
+    $("stickyVerdict").textContent = (buyWins ? "Buy ahead by " + short(diff) : "Rent ahead by " + short(-diff)) + " after " + yrs;
+
+    const facts = [
+      ["Buy: Net Worth", short(r.ownerNW / defl(H))],
+      ["Rent: Net Worth", short(r.renterNW / defl(H))],
+      revert ? ["Appreciation While Reverting", pctf(apprInYear(p, 1)) + "/yr"]
+             : ["Break-Even Appreciation", beApp.found ? pctf(beApp.value) + "/yr" : (beApp.sign > 0 ? "buy always wins" : "rent always wins")]
+    ];
+    $("facts").innerHTML = facts.map(([k, val]) => `<div><dt>${k}</dt><dd>${val}</dd></div>`).join("");
+
+    drawChart(path.slice(0, Math.max(H, 1)), defl, cross);
+
+    // Mortgage
+    const totPaid = r.fullInt + r.fullPrin;
+    $("mortSub").textContent = `${usd(r.loan)} at ${pctf(p.rate, 2)} for ${p.term} years, paid to term.`;
+    const mk = [
+      ["Monthly Principal and Interest", usd(r.pmt)],
+      ["Total Principal", usd(r.fullPrin)],
+      ["Total Interest", usd(r.fullInt)],
+      ["Total Paid to the Lender", usd(totPaid)],
+      ["Interest per $1 Borrowed", r.loan > 0 ? "$" + (r.fullInt / r.loan).toFixed(2) : "No loan"]
+    ];
+    if (r.pmiMonths > 0) mk.push(["PMI (Ends Month " + r.pmiMonths + ")", usd(r.fullPmi)]);
+    if (H < p.term) mk.push([`Balance left at year ${H}`, usd(r.bal)]);
+    $("mortKv").innerHTML = mk.map(([k, val]) => `<dt>${k}</dt><dd>${val}</dd>`).join("");
+    // mini bars per year of term
+    const byYear = [];
+    for (let y = 1; y <= p.term; y++) {
+      let i = 0, pr = 0;
+      for (let m = (y - 1) * 12; m < y * 12; m++) { i += r.sched[m].interest; pr += r.sched[m].principal; }
+      byYear.push({ i, pr });
+    }
+    const maxY = Math.max(1e-9, ...byYear.map(b => b.i + b.pr));
+    $("miniBars").innerHTML = byYear.map(b => `<div style="height:100%"><span class="p" style="height:${(b.pr / maxY * 100).toFixed(2)}%"></span><span class="i" style="height:${(b.i / maxY * 100).toFixed(2)}%"></span></div>`).join("");
+    $("miniEnd").textContent = "Year " + p.term;
+
+    // Monthly first year
+    const y1 = path[0];
+    const own1 = y1.ownerCost / 12, rent1 = y1.rent / 12;
+    const mkv = [
+      ["Principal and Interest", usd((y1.interest + y1.principal) / 12)],
+      ["Taxes, Insurance, Upkeep, HOA", usd(y1.other / 12)],
+    ];
+    if (y1.pmi > 0) mkv.push(["PMI", usd(y1.pmi / 12)]);
+    if (y1.benefit > 0) mkv.push(["Tax Savings from Itemizing", "-" + usd(y1.benefit / 12)]);
+    mkv.push(["Owning, All In", usd(own1)], ["Renting, All In", usd(rent1)],
+      [own1 >= rent1 ? "Renter invests each month" : "Owner invests each month", usd(Math.abs(own1 - rent1))]);
+    $("monthKv").innerHTML = mkv.map(([k, val]) => `<dt>${k}</dt><dd>${val}</dd>`).join("");
+    const ben1 = r.ben[1];
+    $("itemHint").textContent = !p.itemize ? "Off: no mortgage interest deduction is modeled." :
+      (ben1.itemizes ? `Year one: itemizing ${usd(ben1.ownerItem)} beats the ${usd(ben1.std)} standard deduction, saving ${usd(ben1.benefit)}.`
+                     : `Year one: itemizing (${usd(ben1.ownerItem)}) would not beat the ${usd(ben1.std)} standard deduction, so there is no tax benefit.`);
+
+    // Unrecoverable costs (nominal sums over horizon)
+    const t = r.tot;
+    $("costTitle").textContent = `Money You Don't Get Back Over ${H === 1 ? "1 Year" : H + " Years"}`;
+    const rows = [
+      ["Mortgage Interest", t.interest, 0], ["Property Tax", t.ptax, 0], ["Homeowners Insurance", t.ins, 0],
+      ["Maintenance and Repairs", t.maint, 0], ["HOA Dues", t.hoa, 0], ["PMI", t.pmi, 0],
+      ["Closing Costs at Purchase", r.closeAmt, 0], ["Selling Costs at Sale", r.sell, 0],
+      ["Tax on Home Gain", r.homeTax, 0], ["Tax Savings from Itemizing", -t.benefit, 0],
+      ["Tax on Dividends While Invested", t.divTaxO, t.divTaxR],
+      ["Rent and renter's insurance", 0, t.rent]
+    ].filter(x => Math.abs(x[1]) > 0.5 || Math.abs(x[2]) > 0.5);
+    const sumO = rows.reduce((a, x) => a + x[1], 0), sumR = rows.reduce((a, x) => a + x[2], 0);
+    $("costTable").innerHTML = `<thead><tr><th>Cost (future dollars, summed)</th><th>Buy</th><th>Rent</th></tr></thead><tbody>` +
+      rows.map(x => `<tr><td>${x[0]}</td><td>${x[1] ? usd(x[1]) : "-"}</td><td>${x[2] ? usd(x[2]) : "-"}</td></tr>`).join("") +
+      `</tbody><tfoot><tr><td>Total unrecoverable</td><td class="own">${usd(sumO)}</td><td class="rent">${usd(sumR)}</td></tr></tfoot>`;
+
+    // Heat map
+    const apprs = revert ? [0, 0.1, 0.2, 0.3, 0.4] : [0.02, 0.03, 0.04, 0.05, 0.06], rets = [0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10];
+    const rowKey = revert ? "overval" : "appr";
+    $("heatSub").textContent = `Buy minus rent net worth after ${yrs} (${real ? "today's" : "future"} dollars). Rows are ${revert ? "how far today's price-to-rent sits above its norm" : "home appreciation"}, columns are investment return. Green favors buying; gold favors renting. Your current inputs are outlined when they fall on the grid.`;
+    let maxAbs = 1; const cells = [];
+    for (const a of apprs) { const row = []; for (const ir of rets) { const rr = run({ ...p, [rowKey]: a, invRet: ir }); const d = (rr.ownerNW - rr.renterNW) / defl(H); row.push(d); maxAbs = Math.max(maxAbs, Math.abs(d)); } cells.push(row); }
+    const near = (x, y) => Math.abs(x - y) < 1e-9;
+    $("heat").innerHTML = `<thead><tr><th></th>${rets.map(x => `<th>${pctf(x, 0)}</th>`).join("")}</tr></thead><tbody>` +
+      apprs.map((a, i) => `<tr><th>${pctf(a, 0)}</th>${cells[i].map((d, j) => {
+        const k = Math.min(1, Math.abs(d) / maxAbs) * 0.85 + 0.08;
+        const bg = d >= 0 ? `color-mix(in srgb, var(--own) ${Math.round(k * 100)}%, var(--surface))` : `color-mix(in srgb, var(--rent-line) ${Math.round(k * 100)}%, var(--surface))`;
+        const fg = textOn(d >= 0 ? "--own" : "--rent-line", k);
+        const cur = near(a, Math.round(p[rowKey] * 10000) / 10000) && near(rets[j], Math.round(p.invRet * 10000) / 10000);
+        return `<td class="${cur ? "cur" : ""}" style="background:${bg};color:${fg}">${short(d)}</td>`;
+      }).join("")}</tr>`).join("") + `</tbody>`;
+
+    // Year table
+    $("yearTable").innerHTML = `<thead><tr><th>Year</th><th>Home value</th><th>Loan balance</th><th>Own cost/yr</th><th>Rent/yr</th><th>Buy net worth</th><th>Rent net worth</th><th>Buy minus rent</th></tr></thead><tbody>` +
+      path.slice(0, H).map(y => { const d = defl(y.year); return `<tr><td>${y.year}</td><td>${usd(y.homeVal / d)}</td><td>${usd(y.balance / d)}</td><td>${usd(y.ownerCost / d)}</td><td>${usd(y.rent / d)}</td><td>${usd(y.ownerNW / d)}</td><td>${usd(y.renterNW / d)}</td><td class="${y.ownerNW >= y.renterNW ? "own" : "rent"}">${usd((y.ownerNW - y.renterNW) / d)}</td></tr>`; }).join("") + `</tbody>`;
+  }
+
+  // ---- Chart ----
+  let chartData = null;
+  function drawChart(years, defl, cross){
+    const box = $("chart");
+    const W = Math.max(300, box.clientWidth), Hh = Math.round(Math.min(360, Math.max(220, W * 0.45)));
+    const padL = 58, padR = 14, padT = 12, padB = 30;
+    const xs = years.map(y => y.year);
+    const o = years.map(y => y.ownerNW / defl(y.year)), rr = years.map(y => y.renterNW / defl(y.year));
+    let lo = Math.min(0, ...o, ...rr), hi = Math.max(...o, ...rr, 1);
+    const n = xs.length;
+    const X = i => padL + (n === 1 ? (W - padL - padR) / 2 : (i / (n - 1)) * (W - padL - padR));
+    const Y = v => padT + (1 - (v - lo) / (hi - lo)) * (Hh - padT - padB);
+    const step = niceStep((hi - lo) / 5);
+    let grid = "";
+    for (let g = Math.ceil(lo / step) * step; g <= hi + 1e-6; g += step)
+      grid += `<line x1="${padL}" x2="${W - padR}" y1="${Y(g)}" y2="${Y(g)}" stroke="var(--rule)" stroke-width="1"/><text x="${padL - 8}" y="${Y(g) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${short(g)}</text>`;
+    const tickEvery = n > 24 ? 5 : n > 10 ? 2 : 1;
+    let xt = "";
+    xs.forEach((x, i) => { if (x % tickEvery === 0 || i === 0 || i === n - 1) xt += `<text x="${X(i)}" y="${Hh - 8}" text-anchor="middle" font-size="12" fill="var(--muted)">${x}</text>`; });
+    const line = arr => arr.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
+    let crossMark = "";
+    if (cross && cross <= n) {
+      const i = cross - 1;
+      crossMark = `<line x1="${X(i)}" x2="${X(i)}" y1="${padT}" y2="${Hh - padB}" stroke="var(--muted)" stroke-dasharray="3 4"/><text x="${X(i) + 6}" y="${padT + 12}" font-size="12" fill="var(--muted)">Buying pulls ahead, year ${cross}</text>`;
+    }
+    const svg = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Net worth by year for buying versus renting">
+      ${grid}${xt}${crossMark}
+      <path d="${line(rr)}" fill="none" stroke="var(--rent-line)" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="${line(o)}" fill="none" stroke="var(--own)" stroke-width="2.5" stroke-linejoin="round"/>
+      <line id="hoverLine" x1="0" x2="0" y1="${padT}" y2="${Hh - padB}" stroke="var(--ink)" stroke-width="1" opacity="0"/>
+      <circle id="hoverO" r="4" fill="var(--own)" opacity="0"/><circle id="hoverR" r="4" fill="var(--rent-line)" opacity="0"/>
+      <rect x="${padL}" y="${padT}" width="${W - padL - padR}" height="${Hh - padT - padB}" fill="transparent" id="hit"/>
+    </svg>`;
+    box.querySelectorAll("svg").forEach(s => s.remove());
+    box.insertAdjacentHTML("afterbegin", svg);
+    chartData = { X, Y, o, rr, xs, n, padL, padR, W };
+    const hit = box.querySelector("#hit"), tip = $("tip");
+    const move = ev => {
+      const rect = box.querySelector("svg").getBoundingClientRect();
+      const px = (ev.clientX - rect.left) * (W / rect.width);
+      const i = Math.max(0, Math.min(n - 1, Math.round((px - padL) / ((W - padL - padR) / Math.max(1, n - 1)))));
+      const sx = X(i) * rect.width / W;
+      box.querySelector("#hoverLine").setAttribute("x1", X(i)); box.querySelector("#hoverLine").setAttribute("x2", X(i));
+      box.querySelector("#hoverLine").setAttribute("opacity", ".35");
+      const ho = box.querySelector("#hoverO"), hr = box.querySelector("#hoverR");
+      ho.setAttribute("cx", X(i)); ho.setAttribute("cy", Y(o[i])); ho.setAttribute("opacity", "1");
+      hr.setAttribute("cx", X(i)); hr.setAttribute("cy", Y(rr[i])); hr.setAttribute("opacity", "1");
+      tip.style.display = "block";
+      tip.style.left = Math.min(Math.max(sx, 80), rect.width - 80) + "px";
+      tip.style.top = (Math.min(Y(o[i]), Y(rr[i])) * rect.height / Hh - 8) + "px";
+      tip.innerHTML = `Year ${xs[i]}<br>Buy ${usd(o[i])}<br>Rent ${usd(rr[i])}`;
+    };
+    hit.addEventListener("pointermove", move);
+    hit.addEventListener("pointerdown", move);
+    hit.addEventListener("pointerleave", () => { tip.style.display = "none"; ["#hoverLine", "#hoverO", "#hoverR"].forEach(s => box.querySelector(s).setAttribute("opacity", "0")); });
+  }
+  // Heatmap text color: compute the mixed cell color and pick the text token with more contrast.
+  function hexRGB(h){ h = h.trim().replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); }
+  function lum(rgb){ return rgb.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
+  function contrast(a, b){ const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); }
+  function textOn(token, k){
+    const cs = getComputedStyle(document.documentElement), get = n => hexRGB(cs.getPropertyValue(n));
+    const c = get(token), s = get("--surface"), cell = c.map((v, i) => v * k + s[i] * (1 - k));
+    const ink = contrast(cell, get("--ink")), sur = contrast(cell, s);
+    if (Math.max(ink, sur) >= 4.7) return ink >= sur ? "var(--ink)" : "var(--surface)";
+    return contrast(cell, [0, 0, 0]) >= contrast(cell, [255, 255, 255]) ? "#000" : "#fff"; // always reaches at least 4.58
+  }
+  function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1)))); const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+
+  // ---- Wiring ----
+  document.querySelectorAll("input[data-kind]").forEach(el => {
+    el.addEventListener("input", render);
+    el.addEventListener("blur", () => {
+      if (el.id === "assessCap" && String(el.value).trim() === "") return;
+      const v = parseNum(el);
+      el.value = el.dataset.kind === "money" ? fmt0.format(v) : String(+v.toFixed(3));
+    });
+  });
+  const MARKETS = /*MARKETS*/;
+  Object.entries(MARKETS).forEach(([k, m]) => $("selMarket").add(new Option(m.label, k)));
+  const MARKET_HINT = "Sets price, rent, property tax and any assessment cap, rent growth, and how stretched prices are versus rents, from public data for that metro.";
+  const PATH_HINT = {
+    withRents: "Prices grow at the same rate as rents, so today's price-to-rent ratio holds.",
+    trend: "Prices grow at this metro's 1990 to 2025 rate, which bakes in the ratio's rise over that period.",
+    slow: "The price-to-rent gap closes by half every 24 years: the pooled estimate across 18 metros using 1990 to 2025 data, which includes the 2020s run-up (90% range about 18 to 39 years).",
+    typical: "The gap closes by half every 11 years: the same 18-metro estimate using 1990 to 2019 data, before the 2020s boom (90% range about 9 to 13 years).",
+    crash: "The gap closes by half every 2 years, the 2000s bust pace: across 19 metros, price-to-rent fell from peak to trough in 4 to 8 years (median 6).",
+    custom: "" };
+  const RET_HINT = { "0.05": "Vanguard's 10-year US stock forecast ranged from about 4% to 6% a year across its 2026 updates.", "0.07": "A midpoint between today's forecasts and long-run history.",
+                     "0.10": "The S&P 500 returned 10.0% a year from 1928 to 2025 (NYU Stern, Damodaran).", custom: "" };
+  let applying = false;
+  function setVal(id, v, kind){ const el = $(id); el.value = v === null || v === undefined ? "" : (kind === "money" ? fmt0.format(Math.round(v)) : String(+(v * 100).toFixed(3))); }
+  function setPmode(m){ state.pmode = m; document.querySelectorAll("[data-pmode]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.pmode === m))); document.body.classList.toggle("mode-revert", m === "revert"); }
+  function renderGap(){
+    const sel = $("selMarket").value;
+    const rows = Object.entries(MARKETS).map(([k, m]) => ({ k, label: m.label, v: m.overval, est: m.histEstimated }));
+    if (sel === "custom") rows.push({ k: "custom", label: "Custom (Use My Inputs)", v: parseNum($("overval")) / 100, est: false });
+    rows.sort((a, b) => b.v - a.v);
+    const lo = Math.min(0, ...rows.map(r => r.v)), hi = Math.max(0.05, ...rows.map(r => r.v)), span = hi - lo;
+    const z = ((0 - lo) / span * 100).toFixed(2) + "%";
+    const sgn = v => (v >= 0 ? "+" : "") + pctf(v, 0);
+    let h = "";
+    for (const r of rows) {
+      const a = Math.min(0, r.v), b = Math.max(0, r.v);
+      const left = ((a - lo) / span * 100).toFixed(2), w = ((b - a) / span * 100).toFixed(2);
+      h += `<button type="button" class="gaprow${r.k === sel ? " sel" : ""}" data-mk="${r.k}" aria-pressed="${r.k === sel}" aria-label="${r.label}: ${sgn(r.v)} versus its 1990 to 2019 norm${r.est ? ", placeholder estimate" : ""}">`
+        + `<span>${r.label}${r.est ? " *" : ""}</span><span class="gaptrack"><span class="gapbar${r.est ? " est" : ""}" style="left:${left}%;width:${w}%"></span><span class="gapzero" style="left:${z}"></span></span>`
+        + `<span class="gapval">${sgn(r.v)}</span></button>`;
+    }
+    h += `<div class="gapaxis"><span></span><span><span style="position:absolute;left:${z};transform:translateX(-50%)">Norm</span><span style="position:absolute;right:0">${sgn(hi)}</span></span><span></span></div>`;
+    if (rows.some(r => r.est)) h += `<p class="sub" style="margin:10px 0 0">* Placeholder: median of the metros with full histories, until this metro's own history is added.</p>`;
+    $("gapChart").innerHTML = h;
+    $("gapChart").querySelectorAll("[data-mk]").forEach(btn => btn.addEventListener("click", () => {
+      if (btn.dataset.mk === "custom") return;
+      $("selMarket").value = btn.dataset.mk; $("selMarket").dispatchEvent(new Event("change"));
+    }));
+  }
+  function pathLabels(){
+    const mk = MARKETS[$("selMarket").value], rg = parseNum($("rentGrowth")) / 100, o = $("selPath").options;
+    for (const op of o) {
+      if (op.value === "withRents") op.textContent = `Prices Track Rents (${pctf(rg)}/yr)`;
+      if (op.value === "trend") op.textContent = mk ? `Local Historical Trend (${pctf(mk.apprHist)}/yr)` : "Local Historical Trend (Pick a Market)";
+    }
+  }
+  // Preset writes go through pset(): it remembers the preset's value and leaves a field alone if you've changed it.
+  const changed = {}, presetVals = {};
+  function pset(id, v, kind){
+    if (id === "pmode") { presetVals.pmode = v; if (!changed.pmode) setPmode(v); return; }
+    const el = $(id), prev = el.value;
+    if (kind === "raw") el.value = v; else setVal(id, v, kind);
+    presetVals[id] = el.value;
+    if (changed[id]) el.value = prev;
+  }
+  function clearChanged(ids){ ids.forEach(id => delete changed[id]); }
+  function applyPath(){
+    const v = $("selPath").value, mk = MARKETS[$("selMarket").value];
+    let h = PATH_HINT[v] || "";
+    if (v === "trend" && !mk) h += " Pick a market to use its rate.";
+    if ((v === "trend" || v.length && ["slow","typical","crash"].includes(v)) && mk && mk.histEstimated) h += " This metro's history isn't added yet, so the rate and gap are placeholders.";
+    $("pathHint").textContent = h;
+    pathLabels();
+    if (v === "custom") return;
+    applying = true;
+    if (v === "withRents") { pset("pmode", "fixed"); pset("appr", String(+(parseNum($("rentGrowth"))).toFixed(3)), "raw"); }
+    else if (v === "trend") { pset("pmode", "fixed"); if (mk) pset("appr", mk.apprHist); }
+    else { pset("pmode", "revert"); pset("halfLife", { slow: "24", typical: "11", crash: "2" }[v], "raw"); }
+    applying = false;
+  }
+  $("selMarket").addEventListener("change", () => {
+    const mk = MARKETS[$("selMarket").value];
+    $("marketHint").textContent = mk ? mk.note : MARKET_HINT;
+    clearChanged(["price", "rent0", "propTax", "assessCap", "overval", "rentGrowth"]);
+    if (mk) {
+      applying = true;
+      pset("price", mk.price, "money"); if (mk.rent0) pset("rent0", mk.rent0, "money");
+      pset("propTax", mk.propTax); pset("assessCap", mk.assessCap); pset("overval", mk.overval); pset("rentGrowth", mk.rentHist);
+      applying = false;
+    }
+    applyPath(); renderGap(); render();
+  });
+  $("selPath").addEventListener("change", () => { clearChanged(["appr", "halfLife", "pmode"]); applyPath(); render(); });
+  $("selRet").addEventListener("change", () => { const v = $("selRet").value; $("retHint").textContent = RET_HINT[v] || ""; clearChanged(["invRet"]); if (v !== "custom") { applying = true; pset("invRet", +v); applying = false; } render(); });
+  const OWNED = { price: "selMarket", rent0: "selMarket", overval: "selMarket", rentGrowth: "selMarket", propTax: "selMarket", assessCap: "selMarket",
+                  appr: "selPath", halfLife: "selPath", invRet: "selRet" };
+  const HINTS = { selMarket: "marketHint", selPath: "pathHint", selRet: "retHint" };
+
+  // ---- Preset-linked fields: mark, lock, unlock on request, restore ----
+  const GROUPS = { selMarket: ["price", "rent0", "propTax", "assessCap", "overval", "rentGrowth"] };
+  const unlocked = new Set();
+  function presetName(selId){
+    const s = $(selId); if (s.value === "custom") return null;
+    if (selId === "selMarket") return MARKETS[s.value].label.split(",")[0];
+    return s.options[s.selectedIndex].text.split(" (")[0];
+  }
+  function linkedFields(){
+    const out = {};
+    const m = presetName("selMarket"); if (m) GROUPS.selMarket.forEach(id => out[id] = ["selMarket", m]);
+    const p = presetName("selPath"), pv = $("selPath").value;
+    if (p) { out.pmode = ["selPath", p]; if (pv === "withRents" || pv === "trend") out.appr = ["selPath", p]; else out.halfLife = ["selPath", p]; }
+    const r = presetName("selRet"); if (r) out.invRet = ["selRet", r];
+    if (incomeActive()) { out.margRate = ["income", "Your Income"]; out.cgRate = ["income", "Your Income"]; if (MARKETS[$("selMarket").value]) out.stateLocalTax = ["income", "Your Income"]; }
+    return out;
+  }
+  function fieldOf(id){ return id === "pmode" ? document.querySelector("[data-pmode]").closest(".field") : $(id).closest(".field"); }
+  const LINKABLE = ["price","rent0","propTax","assessCap","overval","rentGrowth","appr","halfLife","invRet","pmode","margRate","stateLocalTax","cgRate"];
+  function shown(id){
+    const v = presetVals[id];
+    if (id === "pmode") return v === "revert" ? "Revert to Norm" : "Set Rate";
+    if (v === "" || v === undefined) return "none";
+    if (id === "halfLife") return `${v} years`;
+    return $(id).dataset.kind === "money" ? `$${v}` : `${v}%`;
+  }
+  function resetField(id){
+    delete changed[id]; unlocked.delete(id);
+    if (id === "pmode") setPmode(presetVals.pmode); else { applying = true; $(id).value = presetVals[id]; applying = false; }
+    if (id === "rentGrowth") { pathLabels(); if ($("selPath").value === "withRents") applyPath(); }
+    if (id === "overval") renderGap();
+    renderLinks(); applyIncome(); render();
+  }
+  function renderLinks(){
+    const L = linkedFields();
+    Object.keys(changed).forEach(id => { if (!L[id]) delete changed[id]; });
+    LINKABLE.forEach(id => {
+      const f = fieldOf(id), old = f.querySelector(".linkrow"); if (old) old.remove();
+      const link = L[id], isChanged = !!(link && changed[id]), open = link && !isChanged && unlocked.has(id);
+      f.classList.toggle("linked", !!link && !isChanged && !open);
+      f.classList.toggle("changed", isChanged);
+      const locked = !!link && !isChanged && !open;
+      if (id === "pmode") document.querySelectorAll("[data-pmode]").forEach(b => b.disabled = locked);
+      else $(id).readOnly = locked;
+      if (!link) return;
+      const row = document.createElement("div"), label = f.querySelector("label").textContent;
+      row.className = "linkrow" + (open ? " open" : "");
+      if (isChanged) {
+        row.innerHTML = `<span>Changed from ${link[1]}: ${shown(id)}</span><button type="button" class="unlock">Reset</button>`;
+        row.querySelector("button").setAttribute("aria-label", `Reset ${label} to ${link[1]}'s value, ${shown(id)}`);
+        row.querySelector("button").addEventListener("click", () => resetField(id));
+      } else if (open) {
+        row.textContent = `Your value is kept and marked as changed. ${link[0] === "income" ? "Your other income-based values" : `Everything else from ${link[1]}`} stays as is.`;
+      } else {
+        row.innerHTML = `<span>Set by ${link[1]}</span><button type="button" class="unlock">Edit</button>`;
+        row.querySelector("button").setAttribute("aria-label", `Edit ${label}, set by ${link[1]}`);
+        row.querySelector("button").addEventListener("click", () => {
+          unlocked.add(id); renderLinks();
+          if (id === "pmode") document.querySelector("[data-pmode]").focus(); else { $(id).focus(); $(id).select(); }
+        });
+      }
+      const hint = f.querySelector(".hint"); hint ? f.insertBefore(row, hint) : f.appendChild(row);
+    });
+    const panelOf = id => fieldOf(id).closest(".panel")?.id;
+    const tabsWith = new Set(Object.keys(L).map(panelOf)), tabsChanged = new Set(Object.keys(changed).map(panelOf));
+    document.querySelectorAll(".tab").forEach(tb => {
+      const p = tb.getAttribute("aria-controls"), ch = tabsChanged.has(p), has = tabsWith.has(p) && tb.id !== "tab0";
+      tb.classList.toggle("has-linked", has && !ch); tb.classList.toggle("has-changed", ch);
+      tb.setAttribute("aria-label", tb.textContent + (ch ? ", has values you changed from a preset" : has ? ", has values set by a preset" : ""));
+    });
+    const n = Object.keys(L).length, nc = Object.keys(changed).length;
+    $("linkNote").textContent = !n ? "" : "Fields set by these presets are shaded and locked; choose Edit to change one. A field you change keeps your value, is marked in a different color, and has a Reset link." + (nc ? ` You've changed ${nc} preset value${nc > 1 ? "s" : ""}.` : "");
+  }
+
+  // ---- Income preset: federal bracket, state and local income tax, capital gains rate ----
+  const INCOME_FIELDS = ["margRate", "stateLocalTax", "cgRate"];
+  const incomeVal = () => parseNum($("income"));
+  function incomeActive(){ return incomeVal() > 0; }
+  const money0 = v => "$" + fmt0.format(Math.round(v));
+  function applyIncome(){
+    const mkKey = $("selMarket").value, mk = MARKETS[mkKey];
+    const cityKey = TAX.forHousehold(0, state.filing, mkKey, false).cityName;
+    $("cityField").hidden = !cityKey;
+    if (cityKey) {
+      $("inCityLabel").textContent = `Live Inside ${cityKey} Itself`;
+      $("cityHint").textContent = `Adds ${cityKey}'s resident income tax. Most of the metro lives outside the city and doesn't pay it.`;
+    }
+    const inc = incomeVal(), h = $("incomeHint");
+    if (!(inc > 0)) { h.textContent = "Before tax. Sets your federal bracket, state and local income tax, and capital gains rate from 2026 tax rules, using your filing status and the market's state. Leave blank to enter those yourself in Taxes."; return; }
+    const r = TAX.forHousehold(inc, state.filing, mkKey, cityKey ? $("inCity").checked : false);
+    applying = true;
+    pset("margRate", r.margRate); pset("cgRate", r.cgRate);
+    if (r.stateLocalTax !== null) pset("stateLocalTax", r.stateLocalTax, "money");
+    applying = false;
+    const parts = [`${pctf(r.margRate, 0)} federal bracket.`];
+    if (r.st) parts.push(r.st.none ? `No ${r.st.name} income tax.` : `${r.st.name} income tax about ${money0(r.st.tax)} a year${r.ct ? `, plus ${money0(r.ct.tax)} ${r.ct.name} tax` : ""}.`);
+    else parts.push("Pick a market to include state and local income tax.");
+    const cg = [`${pctf(r.fed.ltcg, 0)} federal`]; if (r.fed.niit) cg.push("3.8% investment income tax");
+    const trim = v => +(v * 100).toFixed(3) + "%";
+    if (r.st && r.st.gains) cg.push(`${trim(r.st.gains)} ${r.st.name}`);
+    if (r.ct && r.ct.gains) cg.push(`${trim(r.ct.gains)} ${r.ct.name}`);
+    parts.push(`Gains taxed at about ${pctf(r.cgRate, 1)} (${cg.join(", ")}).`);
+    if (!$("itemize").checked) parts.push("The federal bracket only matters if you turn on itemizing in Taxes.");
+    if (inc > 505000) parts.push("Above $505,000 the SALT deduction cap phases down, which the model doesn't capture.");
+    const mine = INCOME_FIELDS.filter(id => changed[id]).length;
+    if (mine) parts.push(`You've changed ${mine} of these in Taxes; Reset there brings back the income-based value.`);
+    h.textContent = parts.join(" ");
+  }
+  $("income").addEventListener("input", () => { if (!(incomeVal() > 0)) clearChanged(INCOME_FIELDS); applyIncome(); renderLinks(); render(); });
+  $("inCity").addEventListener("change", () => { applyIncome(); render(); });
+  $("itemize").addEventListener("change", applyIncome);
+  $("selMarket").addEventListener("change", () => { applyIncome(); renderLinks(); render(); });
+  function filingHint(){ $("filingHint").textContent = state.filing === "mfj" ? "Married Filing Jointly. Switch to Single if you file alone: it moves the answer by six figures." : "Single. Switch to Joint if you're married and file together: it moves the answer by six figures."; }
+  document.querySelectorAll("[data-filing]").forEach(b => b.addEventListener("click", () => { state.filing = b.dataset.filing; filingHint(); applyIncome(); renderLinks(); render(); }));
+  filingHint();
+  ["selMarket","selPath","selRet"].forEach(id => $(id).addEventListener("change", () => { unlocked.clear(); renderLinks(); }));
+  LINKABLE.filter(id => id !== "pmode").forEach(id => $(id).addEventListener("input", () => {
+    if (applying) return;
+    const link = linkedFields()[id];
+    if (link && !changed[id]) { changed[id] = true; unlocked.delete(id); renderLinks(); applyIncome(); }
+    if (id === "rentGrowth") { pathLabels(); if ($("selPath").value === "withRents") applyPath(); }
+  }));
+
+  (function(){
+    const tabs = [...document.querySelectorAll('[role="tab"]')];
+    function show(i, focus){
+      tabs.forEach((tb, j) => { const on = i === j; tb.setAttribute("aria-selected", String(on)); tb.tabIndex = on ? 0 : -1; $("panel" + j).hidden = !on; });
+      if (focus) tabs[i].focus();
+    }
+    tabs.forEach((tb, i) => {
+      tb.addEventListener("click", () => show(i));
+      tb.addEventListener("keydown", e => {
+        const k = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        if (k) { e.preventDefault(); show((i + k + tabs.length) % tabs.length, true); }
+        if (e.key === "Home") { e.preventDefault(); show(0, true); }
+        if (e.key === "End") { e.preventDefault(); show(tabs.length - 1, true); }
+      });
+    });
+    const skins = document.querySelectorAll("[data-skinbtn]");
+    function setSkin(s){
+      document.documentElement.dataset.skin = s;
+      skins.forEach(x => x.setAttribute("aria-pressed", String(x.dataset.skinbtn === s)));
+      try { localStorage.setItem("rvb-skin", s); } catch (e) {}
+      render();
+    }
+    skins.forEach(x => x.addEventListener("click", () => setSkin(x.dataset.skinbtn)));
+    skins.forEach(x => x.setAttribute("aria-pressed", String(x.dataset.skinbtn === document.documentElement.dataset.skin)));
+  })();
+  pathLabels();
+  renderGap();
+  applyIncome();
+  renderLinks();
+  $("overval").addEventListener("input", () => { if ($("selMarket").value === "custom") renderGap(); });
+  document.querySelectorAll("[data-pmode]").forEach(b => b.addEventListener("click", () => { if (linkedFields().pmode && b.dataset.pmode !== presetVals.pmode) { changed.pmode = true; unlocked.delete("pmode"); setTimeout(renderLinks); } }));
+  $("itemize").addEventListener("change", render);
+  $("horizon").addEventListener("input", render);
+  document.querySelectorAll("[data-term]").forEach(b => b.addEventListener("click", () => {
+    const old = state.term; state.term = +b.dataset.term;
+    document.querySelectorAll("[data-term]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    if (Math.abs(parseNum($("rate")) - RATE_DEFAULT[old]) < 1e-9) $("rate").value = RATE_DEFAULT[state.term].toFixed(2);
+    render();
+  }));
+  document.querySelectorAll("[data-filing]").forEach(b => b.addEventListener("click", () => {
+    state.filing = b.dataset.filing;
+    document.querySelectorAll("[data-filing]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.filing === state.filing)));
+    render();
+  }));
+  document.querySelectorAll("[data-pmode]").forEach(b => b.addEventListener("click", () => {
+    state.pmode = b.dataset.pmode;
+    document.querySelectorAll("[data-pmode]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    document.body.classList.toggle("mode-revert", state.pmode === "revert");
+    render();
+  }));
+  document.querySelectorAll("[data-basis]").forEach(b => b.addEventListener("click", () => {
+    state.basis = b.dataset.basis;
+    document.querySelectorAll("[data-basis]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    render();
+  }));
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 120); });
+  render();
+})();
+</script>
+</body>
+</html>

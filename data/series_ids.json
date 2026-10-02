@@ -1,0 +1,21 @@
+{
+ "_note": "FRED series behind data/series/. hpi = FHFA All-Transactions House Price Index (quarterly; file rows are 'year q1 q2 q3 q4'). rent = BLS CPI Rent of Primary Residence (file rows are 'year annual_average'). null = not recorded; find it on FRED and prove it with the overlap check in the update-data skill before using it.",
+ "atl": {"hpi": "ATNHPIUS12060Q", "rent": "CUUSA319SEHA", "files": ["atl_hpi_q2.txt", "atl_rent.txt"], "remark": "FHFA's Atlanta index ended in 2024"},
+ "bos": {"hpi": null, "rent": "CUUSA103SEHA", "files": ["bos_hpi.txt", "bos_rent.txt"]},
+ "chi": {"hpi": "ATNHPIUS16984Q", "rent": "CUUSA207SEHA", "files": ["chi_hpi_q2.txt", "chi_rent.txt"]},
+ "dal": {"hpi": "ATNHPIUS19124Q", "rent": "CUUSA316SEHA", "files": ["dal_hpi.txt", "dal_rent.txt"]},
+ "den": {"hpi": null, "rent": "CUUSA433SEHA", "files": ["den_hpi.txt", "den_rent.txt"]},
+ "det": {"hpi": "ATNHPIUS19804Q", "rent": "CUUSA208SEHA", "files": ["det_hpi_q2.txt", "det_rent.txt"]},
+ "hon": {"hpi": "ATNHPIUS46520Q", "rent": "CUUSA426SEHA", "files": ["hon_hpi_q2.txt", "hon_rent.txt"]},
+ "hou": {"hpi": "ATNHPIUS26420Q", "rent": "CUUSA318SEHA", "files": ["hou_hpi_q2.txt", "hou_rent.txt"]},
+ "la":  {"hpi": "ATNHPIUS31084Q", "rent": "CUUSA421SEHA (discontinued) spliced with CUURS49ASEHA", "files": ["la_hpi.txt", "la_rent.txt"]},
+ "mia": {"hpi": "ATNHPIUS33124Q", "rent": "CUUSA320SEHA", "files": ["mia_hpi_q2.txt", "mia_rent.txt"]},
+ "min": {"hpi": "ATNHPIUS33460Q", "rent": "CUUSA211SEHA", "files": ["min_hpi_q2.txt", "min_rent.txt"]},
+ "ny":  {"hpi": "ATNHPIUS35614Q", "rent": "CUUSA101SEHA", "files": ["ny_hpi_q2.txt", "ny_rent.txt"]},
+ "phi": {"hpi": "ATNHPIUS37964Q", "rent": "CUUSA102SEHA", "files": ["phi_hpi_q2.txt", "phi_rent.txt"]},
+ "sd":  {"hpi": "ATNHPIUS41740Q", "rent": "CUUSA424SEHA", "files": ["sd_hpi.txt", "sd_rent.txt"]},
+ "sf":  {"hpi": "ATNHPIUS41884Q", "rent": "CUUSA422SEHA", "files": ["sf_hpi_q2.txt", "sf_rent.txt"]},
+ "stl": {"hpi": "ATNHPIUS41180Q", "rent": "CUUSA209SEHA", "files": ["stl_hpi_q2.txt", "stl_rent.txt"]},
+ "tpa": {"hpi": "ATNHPIUS45300Q", "rent": "CUUSA321SEHA", "files": ["tpa_hpi_q2.txt", "tpa_rent.txt"], "remark": "FHFA's Tampa index ended in 2024"},
+ "dc":  {"hpi": null, "rent": null, "files": [], "remark": "Spliced series not stored in the repo; its stats are fixed values in build/metro_stats.py. Do not change them in a routine run; flag instead."}
+}
