@@ -115,6 +115,15 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
 td.own{color:var(--own)} td.rent{color:var(--rent)}
 .heat td{text-align:center;font-weight:600;border:2px solid var(--surface);padding:9px 6px}
 .heat th{text-align:center;border:0}
+.heat th.axis{font-weight:600;color:var(--muted);font-size:var(--fs-xs)}
+.heat thead tr:first-child th.axis{text-align:center}
+.heat thead tr:last-child th.axis{text-align:left;white-space:normal;max-width:92px;line-height:1.2}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin:0 4px 0 2px}
+.sw-field{width:16px;height:11px}
+.sw-linked{background:var(--own-soft);box-shadow:inset 3px 0 0 var(--own),inset 0 0 0 1px var(--own-soft)}
+.sw-changed{background:var(--changed-soft);box-shadow:inset 3px 0 0 var(--changed)}
+.sw-est{background:repeating-linear-gradient(45deg,var(--muted) 0 2px,transparent 2px 4px)}
+.gapkey{font-size:var(--fs-xs);color:var(--muted);margin:10px 0 0}
 .heat td.cur{outline:2px solid var(--ink);outline-offset:-2px}
 details summary{cursor:pointer;font-weight:600}
 .sources ol{padding-left:20px;margin:0}
@@ -386,7 +395,7 @@ main.pending > section.block, main.pending > .grid2{display:none}
 
       <section class="block" id="gapBlock">
         <h3>How Stretched Each Market Is: Prices Versus Rents</h3>
-        <p class="sub">Each bar compares a metro's home prices to its rents today against that metro's own 1990 to 2019 average (FHFA home price index divided by the BLS rent index). +30% means a dollar of rent buys about 30% less house than it typically did there. This measures prices relative to rents, not prices relative to their own history, so a metro can rank low here (Detroit, where rents rose almost as fast as prices) even when its prices are far above their past trend. Moving the norm to 2000 to 2019, which includes the 2000s bubble, lowers most bars by 5 to 14 points but barely changes the ranking. The reversion price paths assume this premium shrinks over time, so prices grow more slowly than rents until it closes; the bigger the bar, the bigger that drag. Click a bar to pick that market. Hatched bars are placeholder estimates.</p>
+        <p class="sub">Each bar compares a metro's home prices to its rents today against that metro's own 1990 to 2019 average (FHFA home price index divided by the BLS rent index). +30% means a dollar of rent buys about 30% less house than it typically did there. This measures prices relative to rents, not prices relative to their own history, so a metro can rank low here (Detroit, where rents rose almost as fast as prices) even when its prices are far above their past trend. Moving the norm to 2000 to 2019, which includes the 2000s bubble, lowers most bars by 5 to 14 points but barely changes the ranking. The reversion price paths assume this premium shrinks over time, so prices grow more slowly than rents until it closes; the bigger the bar, the bigger that drag. Click a bar to pick that market.</p>
         <div class="gapchart" id="gapChart"></div>
       </section>
 
@@ -624,11 +633,11 @@ main.pending > section.block, main.pending > .grid2{display:none}
     // Heat map
     const apprs = revert ? [0, 0.1, 0.2, 0.3, 0.4] : [0.02, 0.03, 0.04, 0.05, 0.06], rets = [0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10];
     const rowKey = revert ? "overval" : "appr";
-    $("heatSub").textContent = `Buy minus rent net worth after ${yrs} (${real ? "today's" : "future"} dollars). Rows are ${revert ? "how far today's price-to-rent sits above its norm" : "home appreciation"}, columns are investment return. Green favors buying; gold favors renting. Your current inputs are outlined when they fall on the grid.`;
+    $("heatSub").innerHTML = `Buy minus rent net worth after ${yrs}, in ${real ? "today's" : "future"} dollars. Rows are ${revert ? "how far today's price-to-rent sits above its norm (higher means prices fall back more)" : "home appreciation"}; columns are investment return. <span class="sw" style="background:var(--own)"></span>favors buying, <span class="sw" style="background:var(--rent-line)"></span>favors renting. Your current inputs are outlined when they fall on the grid.`;
     let maxAbs = 1; const cells = [];
     for (const a of apprs) { const row = []; for (const ir of rets) { const rr = run({ ...p, [rowKey]: a, invRet: ir }); const d = (rr.ownerNW - rr.renterNW) / defl(H); row.push(d); maxAbs = Math.max(maxAbs, Math.abs(d)); } cells.push(row); }
     const near = (x, y) => Math.abs(x - y) < 1e-9;
-    $("heat").innerHTML = `<thead><tr><th></th>${rets.map(x => `<th>${pctf(x, 0)}</th>`).join("")}</tr></thead><tbody>` +
+    $("heat").innerHTML = `<thead><tr><th></th><th class="axis" colspan="${rets.length}">Investment return</th></tr><tr><th class="axis">${revert ? "Gap above norm" : "Home appreciation"}</th>${rets.map(x => `<th>${pctf(x, 0)}</th>`).join("")}</tr></thead><tbody>` +
       apprs.map((a, i) => `<tr><th>${pctf(a, 0)}</th>${cells[i].map((d, j) => {
         const k = Math.min(1, Math.abs(d) / maxAbs) * 0.85 + 0.08;
         const bg = d >= 0 ? `color-mix(in srgb, var(--own) ${Math.round(k * 100)}%, var(--surface))` : `color-mix(in srgb, var(--rent-line) ${Math.round(k * 100)}%, var(--surface))`;
@@ -752,7 +761,8 @@ main.pending > section.block, main.pending > .grid2{display:none}
         + `<span class="gapval">${sgn(r.v)}</span></button>`;
     }
     h += `<div class="gapaxis"><span></span><span><span style="position:absolute;left:${z};transform:translateX(-50%)">Norm</span><span style="position:absolute;right:0">${sgn(hi)}</span></span><span></span></div>`;
-    if (rows.some(r => r.est)) h += `<p class="sub" style="margin:10px 0 0">* Placeholder: median of the metros with full histories, until this metro's own history is added.</p>`;
+    h += `<p class="gapkey"><span class="sw" style="background:var(--own)"></span>${sel === "custom" ? "Your inputs" : "Selected market"}</p>`;
+    if (rows.some(r => r.est)) h += `<p class="gapkey"><span class="sw sw-est"></span>* Placeholder: median of the metros with full histories, until this metro's own history is added.</p>`;
     $("gapChart").innerHTML = h;
     $("gapChart").querySelectorAll("[data-mk]").forEach(btn => btn.addEventListener("click", () => {
       if (btn.dataset.mk === "custom") return;
@@ -879,7 +889,7 @@ main.pending > section.block, main.pending > .grid2{display:none}
       tb.setAttribute("aria-label", tb.textContent + (ch ? ", has values you changed from a preset" : has ? ", has values set by a preset" : ""));
     });
     const n = Object.keys(L).length, nc = Object.keys(changed).length;
-    $("linkNote").textContent = !n ? "" : "Fields set by these presets are shaded and locked; choose Edit to change one. A field you change keeps your value, is marked in a different color, and has a Reset link." + (nc ? ` You've changed ${nc} preset value${nc > 1 ? "s" : ""}.` : "");
+    $("linkNote").innerHTML = !n ? "" : `<span class="sw sw-field sw-linked"></span>Set by a preset: locked until you choose Edit. <span class="sw sw-field sw-changed"></span>Changed by you: keeps your value and has a Reset link. Tabs get a dot in the matching color.` + (nc ? ` You've changed ${nc} preset value${nc > 1 ? "s" : ""}.` : "");
   }
 
   // ---- Income preset: federal bracket, state and local income tax, capital gains rate ----
